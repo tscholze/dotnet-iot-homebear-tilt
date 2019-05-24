@@ -254,6 +254,8 @@ namespace HomeBear.Tilt.Controller
             Debug.WriteLine($"PIC16F1503 - SetDegrees to {ms} start.\nData: {data}");
 
             // Write to device
+            //pic16f1503.Write(data.ToArray());
+            pic16f1503.Write(new byte[] { COMMANDO_SERVO_1 });
             pic16f1503.Write(data.ToArray());
 
             // Log end.
@@ -308,7 +310,7 @@ namespace HomeBear.Tilt.Controller
                     break;
 
                 case PIC16F1503Action.Pan:
-                    SetDegrees(PIC16F1503Action.Pan, 65);
+                    SetDegrees(PIC16F1503Action.Pan, 50);
                     break;
             }
 
@@ -332,10 +334,20 @@ namespace HomeBear.Tilt.Controller
         {
             // Create configuration mask.
             byte config = 0;
+
+            // Enable servo 1
             config |= 1;
+
+            // Enable servo 2
             config |= 0 << 1;
+
+            // Enable lights
             config |= 0 << 2;
+
+            // Light mode
             config |= 0 << 3;
+
+            // Light on
             config |= 0 << 4;
 
             // Write configuration to device.
