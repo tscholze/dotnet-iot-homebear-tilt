@@ -324,6 +324,7 @@ namespace HomeBear.Tilt.Controller
         /// <param name="data">Data value.</param>
         private void WriteByte(byte command, byte[] data)
         {
+            data.ToList().Insert(0, command);
             pic16f1503.Write(data);
         }
 
