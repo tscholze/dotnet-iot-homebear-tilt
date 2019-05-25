@@ -325,6 +325,7 @@ namespace HomeBear.Tilt.Controller
         private void WriteByte(byte command, byte[] data)
         {
             data.ToList().Insert(0, command);
+            data.ToArray();
             pic16f1503.Write(data);
         }
 
