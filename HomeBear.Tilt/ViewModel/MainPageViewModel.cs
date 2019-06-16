@@ -1,10 +1,7 @@
-﻿using GalaSoft.MvvmLight.Command;
-using HomeBear.Tilt.Controller;
+﻿using HomeBear.Tilt.Controller;
 using System;
-using System.Windows.Input;
 using Windows.ApplicationModel;
 using Windows.System.Threading;
-using Windows.UI;
 
 namespace HomeBear.Tilt.ViewModel
 {
@@ -80,7 +77,7 @@ namespace HomeBear.Tilt.ViewModel
 
         #region Private properties
 
-        PIC16F1503 tiltController = PIC16F1503.Default;
+        PIC16F1503 tiltController = new PIC16F1503();
 
         #endregion
 
@@ -116,7 +113,14 @@ namespace HomeBear.Tilt.ViewModel
 
         private async void FooAsync()
         {
+            // Init
             await tiltController.InitAsync();
+
+            // Pan
+            tiltController.Pan(7);
+
+            // Read pan value, should match the value which's set before.
+            ThreadPoolTimer.CreateTimer((ThreadPoolTimer threadPoolTimer)  => { tiltController.PanDegrees(); }, TimeSpan.FromSeconds(5));
         }
 
         #endregion

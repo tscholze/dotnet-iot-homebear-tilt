@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Windows.Devices.Enumeration;
 using Windows.Devices.I2c;
@@ -18,10 +17,7 @@ namespace HomeBear.Tilt.Controller
     {
         #region Private properties 
 
-        /// <summary>
-        /// Underlying shared instance.
-        /// </summary>
-        private static readonly PIC16F1503 instance = new PIC16F1503();
+        private static string I2C_CONTROLLER_NAME = "I2C1";
 
         /// <summary>
         /// Address of the PIC16F1503.
@@ -94,29 +90,6 @@ namespace HomeBear.Tilt.Controller
         #region Public Properties
 
         /// <summary>
-        /// Default instance of BlinktController.
-        /// </summary>
-        public static PIC16F1503 Default
-        {
-            get
-            {
-                return instance;
-            }
-        }
-
-        #endregion
-
-        #region Constructor, Init & Deconstructor
-
-        static PIC16F1503()
-        {
-        }
-
-        private PIC16F1503()
-        {
-        }
-
-        /// <summary>
         /// Initialieses the PIC16F1503 async.
         /// </summary>
         /// <returns>Init task.</returns>
@@ -129,7 +102,7 @@ namespace HomeBear.Tilt.Controller
             if (IsInitialized) return;
 
             // Get controller.
-            string i2cDeviceSelector = I2cDevice.GetDeviceSelector();
+            var i2cDeviceSelector = I2cDevice.GetDeviceSelector(I2C_CONTROLLER_NAME);
             IReadOnlyList<DeviceInformation> devices = await DeviceInformation.FindAllAsync(i2cDeviceSelector);
 
             // Ensure required controller has been found.
@@ -156,10 +129,11 @@ namespace HomeBear.Tilt.Controller
 
             // Log end.
             Debug.WriteLine("PIC16F1503 - Init finished");
+        }
 
-
-            // DEV
-            PerformAction(PIC16F1503Action.Pan);
+        internal void PanDegrees()
+        {
+            GetDegrees();
         }
 
         /// <summary>
@@ -177,20 +151,21 @@ namespace HomeBear.Tilt.Controller
         /// <summary>
         /// Converts milliseconds to degrees.
         /// </summary>
-        /// <param name="ms">Milliseconds value to convert.</param>
+        /// <param name="pulse">Pulse in milliseconds value to convert.</param>
         /// <returns>Converted degree value.</returns>
-        private int MsToAngle(int ms)
+        private int MsToAngle(int pulse)
         {
-            if(!ValidateRange(ms, SERVO_MIN_MS, SERVO_MAX_MS))
+            // Ensure range is valid.
+            if (!ValidateRange(pulse, SERVO_MIN_MS, SERVO_MAX_MS))
             {
-                throw new InvalidOperationException($"Given ms of {ms} is less than {SERVO_MIN_MS} or greater than {SERVO_MAX_MS}");
+                throw new InvalidOperationException($"Given ms of {pulse} is less than {SERVO_MIN_MS} or greater than {SERVO_MAX_MS}");
             }
 
-            // TODO: Why casting.-
-            var angle = (Convert.ToDouble(ms - SERVO_MIN_MS) / Convert.ToDouble(SERVO_RANGE_MS)) * 180.0;
-
-            return Convert.ToInt32(angle) - SERVO_MAX_ANGLE;
+            // Perform calculation.
+            var angle = (pulse - SERVO_MIN_MS) / (float)SERVO_RANGE_MS * 180;
+            return ((int)Math.Round(angle, 0)) - 90;
         }
+
 
         /// <summary>
         /// Converts degrees to milliseconds.
@@ -199,46 +174,35 @@ namespace HomeBear.Tilt.Controller
         /// <returns>Converted millisecond value.</returns>
         private int DegreesToMs(int degrees)
         {
-            // Validate range
+            // Ensure range is valid.
             if (!ValidateRange(degrees, SERVO_MIN_ANGLE, SERVO_MAX_ANGLE))
             {
                 throw new InvalidOperationException($"Given angle of {degrees} is less than {SERVO_MIN_ANGLE} or greater than {SERVO_MAX_ANGLE}");
             }
 
-            var ms = SERVO_MIN_MS + ((SERVO_RANGE_MS / 180) * (degrees + SERVO_MAX_ANGLE));
+            degrees += SERVO_MAX_ANGLE;
 
-            System.Console.WriteLine($"Convereted {degrees} to {ms} ms");
-            return ms;
+            // Perform calculation.
+            return SERVO_MIN_MS + (SERVO_RANGE_MS / 180) * degrees;
         }
 
-        /// <summary>
-        /// Gets degrees from servo.
-        /// </summary>
-        /// <returns>Degree of servo</returns>
-        private int GetDegrees()
+        private void GetDegrees()
         {
-            // Read data from device.
-            var readBuffer = new byte[4];
-            var result = pic16f1503.ReadPartial(readBuffer);
+            byte[] readBuffer = new byte[2];
+            var readResult = pic16f1503.WriteReadPartial(new byte[] { COMMANDO_SERVO_1 }, readBuffer);
 
-            // TODO: Implement it
-            System.Console.WriteLine($"Result: {result}");
-            foreach (var b in readBuffer)
-            {
-                System.Console.WriteLine($"{b}");
-            }
-
-            return 100;
+            var angle = MsToAngle(readBuffer[0] | (readBuffer[1] << 8));
+            Debug.WriteLine($"AAAANGLE: {angle}");
         }
 
-        /// <summary>
-        /// Sets degree value to specified roation action.
-        /// </summary>
-        /// <param name="action">Executed action.</param>
-        /// <param name="degrees">New degree value.</param>
-        private void SetDegrees(PIC16F1503Action action, int degrees)
+            /// <summary>
+            /// Sets degree value to specified roation action.
+            /// </summary>
+            /// <param name="action">Executed action.</param>
+            /// <param name="degrees">New degree value.</param>
+            private void SetDegrees(PIC16F1503Action action, int degrees)
         {
-            // TODO: Abstract it to use servo propertx
+            // TODO: Abstract it to use servo property
             if(!isServo1Enabled)
             {
                 PerformAction(PIC16F1503Action.EnableServo1);
@@ -247,19 +211,7 @@ namespace HomeBear.Tilt.Controller
             // Build data bytes
             // Order: [CMD, DATA]
             var ms = DegreesToMs(degrees);
-            var data = BitConverter.GetBytes(ms).ToList();
-            data.Insert(0, COMMANDO_SERVO_1);
-
-            // Log Start.
-            Debug.WriteLine($"PIC16F1503 - SetDegrees to {ms} start.\nData: {data}");
-
-            // Write to device
-            //pic16f1503.Write(data.ToArray());
-            pic16f1503.Write(new byte[] { COMMANDO_SERVO_1 });
-            pic16f1503.Write(data.ToArray());
-
-            // Log end.
-            Debug.WriteLine("PIC16F1503 - SetDegrees finished");
+            WriteByte(COMMANDO_SERVO_1, BitConverter.GetBytes(ms));
         }
 
         #endregion
@@ -295,26 +247,28 @@ namespace HomeBear.Tilt.Controller
             {
                 case PIC16F1503Action.EnableServo1:
                     isServo1Enabled = true;
+                    WriteConfiguration();
                     break;
 
                 case PIC16F1503Action.EnableServo2:
                     isServo2Enabled = true;
+                    WriteConfiguration();
                     break;
 
                 case PIC16F1503Action.DisableServo1:
                     isServo1Enabled = false;
+                    WriteConfiguration();
                     break;
 
                 case PIC16F1503Action.DisableServo2:
                     isServo1Enabled = false;
+                    WriteConfiguration();
                     break;
 
                 case PIC16F1503Action.Pan:
                     SetDegrees(PIC16F1503Action.Pan, 50);
                     break;
             }
-
-            WriteConfiguration();
         }
 
         /// <summary>
@@ -322,11 +276,22 @@ namespace HomeBear.Tilt.Controller
         /// </summary>
         /// <param name="command">Command value.</param>
         /// <param name="data">Data value.</param>
-        private void WriteByte(byte command, byte[] data)
+        private bool WriteByte(byte command, byte[] data)
         {
-            data.ToList().Insert(0, command);
-            data.ToArray();
-            pic16f1503.Write(data);
+            // Update data with command register.
+            var list = data.ToList();
+            list.Insert(0, command);
+
+            // Log
+            var text = "";
+            list.ForEach(b => text += ($" [{b.ToString()}]"));
+            Debug.WriteLine($"Writing follwing byte sequence to the device: {text}");
+
+            // Write to device.
+            var writeResult = pic16f1503.WritePartial(list.ToArray());
+
+            // Check if transfer was successful.
+            return writeResult.Status == I2cTransferStatus.FullTransfer;
         }
 
         /// <summary>
@@ -366,28 +331,9 @@ namespace HomeBear.Tilt.Controller
         /// <param name="degrees">New degree value</param>
         public void Pan(int degrees)
         {
-           // SetDegrees(servo1, degrees);
-        }
-
-        /// <summary>
-        /// Tilts the arm to the given degree value.
-        /// </summary>
-        /// <param name="degrees">New degree value</param>
-        public void Tilt(int degrees)
-        {
-            // SetDegrees(servo1, degrees);
+            SetDegrees(PIC16F1503Action.Pan, degrees);
         }
 
         #endregion
     }
-}
-
-enum PIC16F1503Action
-{
-    EnableServo1,
-    EnableServo2,
-    DisableServo1,
-    DisableServo2,
-    Pan,
-    Tilt
 }
