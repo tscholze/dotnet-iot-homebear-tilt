@@ -22,7 +22,7 @@
 
 **Keep in mind**
 
-* All features have room for improvements.
+All features have room for improvements.
 
 **Information**
 
