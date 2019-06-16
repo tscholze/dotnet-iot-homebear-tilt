@@ -119,7 +119,7 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Controller\PIC16F1503.cs" />
+    <Compile Include="Controller\PanTiltHAT.cs" />
     <Compile Include="Controller\PIC16F1503Action.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utils\DeviceNotFoundException.cs" />

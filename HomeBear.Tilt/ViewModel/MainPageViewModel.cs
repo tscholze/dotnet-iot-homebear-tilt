@@ -77,7 +77,10 @@ namespace HomeBear.Tilt.ViewModel
 
         #region Private properties
 
-        PIC16F1503 tiltController = new PIC16F1503();
+        /// <summary>
+        /// Underlying tilt controller.
+        /// </summary>
+        readonly PanTiltHAT tiltController = new PanTiltHAT();
 
         #endregion
 
@@ -100,32 +103,31 @@ namespace HomeBear.Tilt.ViewModel
 
         #endregion
 
-        #region Private helper methods
+        #region Private helper
 
         /// <summary>
         /// Will be update the `CurrentTime` member with each tick.
         /// </summary>
-        /// <param name="timer"></param>
+        /// <param name="timer">Underyling timer</param>
         private void ClockTimer_Tick(ThreadPoolTimer timer)
         {
             CurrentTime = DateTime.Now.ToShortTimeString();
         }
 
+        /// <summary>
+        /// Only debug foo!
+        /// </summary>
         private async void FooAsync()
         {
             // Init
             await tiltController.InitAsync();
 
             // Pan
-            tiltController.Pan(7);
+            tiltController.Tilt(0);
 
             // Read pan value, should match the value which's set before.
-            ThreadPoolTimer.CreateTimer((ThreadPoolTimer threadPoolTimer)  => { tiltController.PanDegrees(); }, TimeSpan.FromSeconds(5));
+            ThreadPoolTimer.CreateTimer((ThreadPoolTimer threadPoolTimer)  => { tiltController.TiltDegrees(); }, TimeSpan.FromSeconds(5));
         }
-
-        #endregion
-
-        #region Public helper methods
 
         #endregion
     }
