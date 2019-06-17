@@ -124,9 +124,10 @@ namespace HomeBear.Tilt.ViewModel
 
             // Pan
             tiltController.Tilt(0);
+            tiltController.Pan(0);
 
             // Read pan value, should match the value which's set before.
-            ThreadPoolTimer.CreateTimer((ThreadPoolTimer threadPoolTimer)  => { tiltController.TiltDegrees(); }, TimeSpan.FromSeconds(5));
+            ThreadPoolTimer.CreateTimer((ThreadPoolTimer threadPoolTimer)  => { tiltController.TiltDegrees(); tiltController.PanDegrees(); }, TimeSpan.FromSeconds(5));
         }
 
         #endregion

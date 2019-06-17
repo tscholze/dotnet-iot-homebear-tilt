@@ -11,7 +11,7 @@ using Windows.System.Threading;
 namespace HomeBear.Tilt.Controller
 {
     /// <summary>
-    /// This class helps to send controls and read values from the PanTilt HAT.
+    /// This class helps to send controls and read values from the PanTilt HAT (PIC16F1503).
     /// This is a C# port of the offical Pimoroni Python library.
     /// 
     /// Links:
@@ -299,7 +299,7 @@ namespace HomeBear.Tilt.Controller
 
             // Convert pulses to degrees.
             var degrees = MsToDegrees(readBuffer[0] | (readBuffer[1] << 8));
-            Debug.WriteLine($"Found degrees: {degrees}");
+            Debug.WriteLine($"Found `{degrees}` degrees for action `{action.ToString()}` ");
 
             // Return value.
             return degrees;
@@ -347,7 +347,7 @@ namespace HomeBear.Tilt.Controller
         /// </summary>
         private void StartServoTimeOutTimer()
         {
-            servoTimeOutTimer = ThreadPoolTimer.CreatePeriodicTimer(TimeOutTimer_Tick, TimeSpan.FromSeconds(SERVO_IDLE_TIMEOUT_SECONDS);
+            servoTimeOutTimer = ThreadPoolTimer.CreateTimer(TimeOutTimer_Tick, TimeSpan.FromSeconds(SERVO_IDLE_TIMEOUT_SECONDS));
         }
 
         /// <summary>

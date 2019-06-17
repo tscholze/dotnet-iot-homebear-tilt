@@ -2,7 +2,7 @@
 
 <img src="docs/header.png" width="300" /> 
 
-> Windows 10 IoT Core UWP app that works great with the Pimoroni Tilt and Pan arm.
+> Windows 10 IoT Core UWP app that works great with the Pimoroni [Pan-Tilt HAT](https://shop.pimoroni.com/products/pan-tilt-hat) (PIC16F1503).
 
 ## Prerequirements
 - Windows 10
@@ -12,13 +12,17 @@
 
 ## How it looks
 
-...
+Still heavily work in progress.
 
 ## Features
 
 - [ ] Pans
 - [ ] Tilts
 - [ ] Controls LEDs
+
+## Usage
+
+Still heavily work in progress.
 
 **Keep in mind**
 
@@ -27,6 +31,10 @@ All features have room for improvements.
 **Information**
 
 Most of the logic behind is based on the offical Python libraries.
+
+## Known issues
+
+Reading of pan and tilt angles are slighlty off the actual value.
 
 ## Ideas for the future
 

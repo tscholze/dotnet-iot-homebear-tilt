@@ -120,7 +120,7 @@
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
     <Compile Include="Controller\PanTiltHAT.cs" />
-    <Compile Include="Controller\PIC16F1503Action.cs" />
+    <Compile Include="Controller\PanTiltHATAction.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utils\DeviceNotFoundException.cs" />
     <Compile Include="ViewModel\BaseViewModel.cs" />
