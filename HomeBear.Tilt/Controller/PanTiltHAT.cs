@@ -244,12 +244,13 @@ namespace HomeBear.Tilt.Controller
         /// </summary>
         /// <param name="pulse">Pulse in milliseconds value to convert.</param>
         /// <returns>Converted degree value.</returns>
-        private int MsToDegrees(int pulse)
+        private int? MsToDegrees(int pulse)
         {
             // Ensure range is valid.
             if (!ValidateRange(pulse, SERVO_MIN_MS, SERVO_MAX_MS))
             {
-                throw new InvalidOperationException($"Given ms of {pulse} is less than {SERVO_MIN_MS} or greater than {SERVO_MAX_MS}");
+                Debug.WriteLine($"Ignoring pulse if `{pulse}`");
+                return null;
             }
 
             // Perform calculation.
@@ -262,12 +263,13 @@ namespace HomeBear.Tilt.Controller
         /// </summary>
         /// <param name="degrees">Degree value to convert.</param>
         /// <returns>Converted millisecond value.</returns>
-        private int DegreesToMs(int degrees)
+        private int? DegreesToMs(int degrees)
         {
             // Ensure range is valid.
             if (!ValidateRange(degrees, SERVO_MIN_ANGLE, SERVO_MAX_ANGLE))
             {
-                throw new InvalidOperationException($"Given angle of {degrees} is less than {SERVO_MIN_ANGLE} or greater than {SERVO_MAX_ANGLE}");
+                Debug.WriteLine($"Ignoring degrees of `{degrees}`");
+                return null;
             }
 
             degrees += SERVO_MAX_ANGLE;
@@ -302,7 +304,7 @@ namespace HomeBear.Tilt.Controller
             Debug.WriteLine($"Found `{degrees}` degrees for action `{action.ToString()}` ");
 
             // Return value.
-            return degrees;
+            return degrees.GetValueOrDefault();
         }
 
         /// <summary>
@@ -333,7 +335,16 @@ namespace HomeBear.Tilt.Controller
 
             // Build data bytes.
             var command = isTiltRequested ? COMMANDO_SERVO_1 : COMMANDO_SERVO_2;
-            var bitmask = BitConverter.GetBytes(DegreesToMs(degrees));
+
+            // Get (valid) milliseconds from degrees.
+            // Cancel method call if ms are not valid.
+            var ms = DegreesToMs(degrees);
+            if (ms == null)
+            {
+                return;
+            }
+
+            var bitmask = BitConverter.GetBytes(ms.GetValueOrDefault());
 
             // Write to device.
             WriteByte(command, bitmask);

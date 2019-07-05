@@ -12,7 +12,7 @@
 
 ## How it looks
 
-Still heavily work in progress.
+![On-device](docs/on-device-screenshot.jpg)
 
 ## Features
 

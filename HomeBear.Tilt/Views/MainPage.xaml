@@ -8,6 +8,15 @@
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
+    <!-- Page resources -->
+    <Page.Resources>
+        <Style x:Key="MovementButtonStyle" TargetType="Button">
+            <Setter Property="Width" Value="60" />
+            <Setter Property="Height" Value="60" />
+            <Setter Property="Margin" Value="5" />
+        </Style>
+    </Page.Resources>
+
     <!-- Page grid-->
     <Grid>
         <Grid.RowDefinitions>
@@ -48,13 +57,129 @@
                     Margin="20,0,20,0" 
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center">
+
             <!--  Title  -->
-            <TextBlock Text="Pimoroni Tilt"
+            <TextBlock Text="Pimoroni Pan/Tilt"
                        FontSize="75" />
 
             <!--  Page content  -->
-            <StackPanel Margin="20">
+            <StackPanel Margin="20" 
+                        HorizontalAlignment="Center">
+                <StackPanel>
+                    <!-- Boxes -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <!-- LED -->
+                            <ColumnDefinition Width="Auto" />
+                            <!-- Movement -->
+                            <ColumnDefinition Width="Auto" />
+                            <!-- Spacer to the right -->
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
 
+                        <!-- LED buttons -->
+                        <StackPanel Grid.Column="0"  
+                                    Padding="10"
+                                    Margin="0 0 40 0"
+                                    BorderBrush="White" 
+                                    BorderThickness="1" >
+
+                            <!-- Box title -->
+                            <TextBlock Text="LED values"
+                                       FontSize="24"
+                                       Margin="0 0 0 10"/>
+
+                            <!--  On -->
+                            <Button Content="On"
+                                    Margin="0 0 0 20"
+                                    Width="125"
+                                    IsEnabled="False"/>
+
+                            <!-- Off -->
+                            <Button Content="Off"
+                                    Margin="0 0 0 20"
+                                    Width="125"
+                                    IsEnabled="False"/>
+                            
+                            <!-- Hint text -->
+                            <TextBlock Text="Not implemented yet"
+                                       Margin="0 0 0 20"
+                                       FontStyle="Italic"/>
+                        </StackPanel>
+
+                        <!-- Movement control -->
+                        <StackPanel Grid.Column="1" 
+                                    Orientation="Vertical" 
+                                    Padding="10" 
+                                    Margin="0 0 20 0"
+                                    BorderBrush="White" 
+                                    BorderThickness="1">
+
+                            <!-- Box title -->
+                            <TextBlock Text="Movement values"
+                                       FontSize="24"
+                                       Margin="0 0 0 10"/>
+
+                            <!-- Button control cross -->
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Buttons -->
+                                
+                                <!-- Tilt - (up) -->
+                                <Button Grid.Row="0" 
+                                        Grid.Column="1" 
+                                        Style="{StaticResource MovementButtonStyle}"
+                                        Command="{Binding PositiveTiltCommand}">
+                                    <TextBlock HorizontalTextAlignment="Center">
+                                        Tilt<LineBreak />(-)
+                                    </TextBlock>
+                                </Button>
+
+                                <!-- Pan - (left) -->
+                                <Button Grid.Row="1" 
+                                        Grid.Column="0" 
+                                        Style="{StaticResource MovementButtonStyle}"
+                                        Command="{Binding NegativePanCommand}">
+                                    <TextBlock HorizontalTextAlignment="Center">
+                                        Pan<LineBreak />(-)
+                                    </TextBlock>
+                                </Button>
+
+                                <!-- Pan + (right)-->
+                                <Button Grid.Row="1"
+                                        Grid.Column="2" 
+                                        Style="{StaticResource MovementButtonStyle}"
+                                        Command="{Binding PositivePanCommand}">
+                                    <TextBlock HorizontalTextAlignment="Center">
+                                        Pan<LineBreak />(+)
+                                    </TextBlock>
+                                </Button>
+
+                                <!-- Tilt + (down)-->
+                                <Button Grid.Row="2" 
+                                        Grid.Column="1"
+                                        Style="{StaticResource MovementButtonStyle}"
+                                        Command="{Binding NegativeTiltCommand}">
+                                    <TextBlock HorizontalTextAlignment="Center">
+                                        Tilt <LineBreak />(+) 
+                                    </TextBlock>
+                                </Button>
+                            </Grid>
+
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
             </StackPanel>
         </StackPanel>
 

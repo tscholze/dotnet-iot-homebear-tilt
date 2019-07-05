@@ -1,5 +1,7 @@
-﻿using HomeBear.Tilt.Controller;
+﻿using GalaSoft.MvvmLight.Command;
+using HomeBear.Tilt.Controller;
 using System;
+using System.Windows.Input;
 using Windows.ApplicationModel;
 using Windows.System.Threading;
 
@@ -73,9 +75,39 @@ namespace HomeBear.Tilt.ViewModel
             }
         }
 
+        /// <summary>
+        /// This command will trigger a panning in the positive direction.
+        /// </summary>
+        public ICommand PositivePanCommand { get; private set; }
+
+        /// <summary>
+        /// This command will trigger a panning in the negative direction.
+        /// </summary>
+        public ICommand NegativePanCommand { get; private set; }
+
+        /// <summary>
+        /// This command will trigger a tilting in the negative direction.
+        /// </summary>
+        public ICommand PositiveTiltCommand { get; private set; }
+
+        /// <summary>
+        /// This command will trigger a tilting in the negative direction.
+        /// </summary>
+        public ICommand NegativeTiltCommand { get; private set; }
+
         #endregion
 
         #region Private properties
+
+        /// <summary>
+        /// Positive delta for panning or tilting in degrees.
+        /// </summary>
+        static readonly int POSTIVE_DEGREE_DELTA = 10;
+
+        /// <summary>
+        /// Negative detla for panning or tilting in degrees.
+        /// </summary>
+        static readonly int NEGATIVE_DEGREE_DETLA = -1 * POSTIVE_DEGREE_DELTA;
 
         /// <summary>
         /// Underlying tilt controller.
@@ -92,13 +124,35 @@ namespace HomeBear.Tilt.ViewModel
         /// </summary>
         public MainPageViewModel()
         {
+            // Setup tilt controller.
+            InitAsync();
+
             // Setup timer.
             ThreadPoolTimer.CreatePeriodicTimer
                 (ClockTimer_Tick,
                 TimeSpan.FromSeconds(1)
            );
 
-            FooAsync();
+            // Setup the commands.
+            PositivePanCommand = new RelayCommand(() =>
+            {
+                tiltController.Pan(tiltController.PanDegrees() + POSTIVE_DEGREE_DELTA);
+            });
+
+            NegativePanCommand = new RelayCommand(() =>
+            {
+                tiltController.Pan(tiltController.PanDegrees() + NEGATIVE_DEGREE_DETLA);
+            });
+
+            PositiveTiltCommand = new RelayCommand(() =>
+            {
+                tiltController.Tilt(tiltController.TiltDegrees() + POSTIVE_DEGREE_DELTA);
+            });
+
+            NegativeTiltCommand = new RelayCommand(() =>
+            {
+                tiltController.Tilt(tiltController.TiltDegrees() + NEGATIVE_DEGREE_DETLA);
+            });
         }
 
         #endregion
@@ -117,17 +171,13 @@ namespace HomeBear.Tilt.ViewModel
         /// <summary>
         /// Only debug foo!
         /// </summary>
-        private async void FooAsync()
+        /// <summary>
+        /// Only debug foo!
+        /// </summary>
+        private async void InitAsync()
         {
-            // Init
+            // Init TiltController async.
             await tiltController.InitAsync();
-
-            // Pan
-            tiltController.Tilt(0);
-            tiltController.Pan(0);
-
-            // Read pan value, should match the value which's set before.
-            ThreadPoolTimer.CreateTimer((ThreadPoolTimer threadPoolTimer)  => { tiltController.TiltDegrees(); tiltController.PanDegrees(); }, TimeSpan.FromSeconds(5));
         }
 
         #endregion
