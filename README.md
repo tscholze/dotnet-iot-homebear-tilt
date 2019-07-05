@@ -16,8 +16,8 @@
 
 ## Features
 
-- [ ] Pans
-- [ ] Tilts
+- [x] Pans
+- [x] Tilts
 - [ ] Controls LEDs
 
 ## Usage
@@ -34,7 +34,8 @@ Most of the logic behind is based on the offical Python libraries.
 
 ## Known issues
 
-Reading of pan and tilt angles are slighlty off the actual value.
+- Reading of pan and tilt angles are (slighlty) off the actual value.
+- The servos sometimes start to buzz quite heavily. 
 
 ## Ideas for the future
 
