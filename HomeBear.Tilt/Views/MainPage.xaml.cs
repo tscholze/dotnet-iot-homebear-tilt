@@ -1,13 +1,18 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using HomeBear.Tilt.ViewModel;
 using Windows.Devices.Enumeration;
 using Windows.Media.Capture;
+using Windows.Media.Core;
+using Windows.Media.FaceAnalysis;
+using Windows.UI.Core;
 using Windows.UI.Xaml.Controls;
 
 namespace HomeBear.Tilt.Views
 {
     /// <summary>
+    /// https://github.com/microsoft/Windows-universal-samples/blob/master/Samples/CameraFaceDetection/cs/MainPage.xaml.cs
     /// Entry page of the app. 
     /// It provides an navigation point to all other functionality of HomeBear.
     /// </summary>
@@ -24,6 +29,11 @@ namespace HomeBear.Tilt.Views
         /// Underlying media capture instance for webcam.
         /// </summary>
         private MediaCapture mediaCapture;
+
+        /// <summary>
+        /// Underlying face detection.
+        /// </summary>
+        private FaceDetectionEffect faceDetectionEffect;
 
         /// <summary>
         /// Determines if previewing is currently active.
@@ -96,9 +106,40 @@ namespace HomeBear.Tilt.Views
                 return;
             }
 
+            // Setup face detection
+            var definition = new FaceDetectionEffectDefinition
+            {
+                SynchronousDetectionEnabled = false,
+                DetectionMode = FaceDetectionMode.HighPerformance
+            };
+
+            // Get effect.
+            faceDetectionEffect = (FaceDetectionEffect) await mediaCapture.AddVideoEffectAsync(definition, MediaStreamType.VideoPreview);
+            faceDetectionEffect.DesiredDetectionInterval = TimeSpan.FromMilliseconds(33);
+            
+            // Setup callbacks
+            faceDetectionEffect.FaceDetected += FaceDetectionEffect_FaceDetected;
+            
             // Setup ui.
             PreviewControl.Source = mediaCapture;
             PreviewingButton.IsEnabled = true;
+        }
+
+        /// <summary>
+        /// Highlights the detected faces.
+        /// </summary>
+        /// <param name="faces">Detected faces.</param>
+        private void HighlightDetectedFaces(IReadOnlyList<DetectedFace> faces)
+        {
+            // Ensure at least one face has been detected.
+            if (faces.Count == 0) return;
+
+            // Remove all other highlights.
+
+            // Draw new highlights.
+
+            // Update Ui.
+            System.Diagnostics.Debug.WriteLine($"FOUND {faces[0].ToString()}");
         }
 
         /// <summary>
@@ -107,8 +148,9 @@ namespace HomeBear.Tilt.Views
         private async void StartPreviewing()
         {
             await mediaCapture.StartPreviewAsync();
+            faceDetectionEffect.Enabled = true;
             isPreviewing = true;
-            PreviewingButton.Content = "Stop camera";
+            PreviewingButton.Content = "Stop";
         }
 
         /// <summary>
@@ -117,8 +159,9 @@ namespace HomeBear.Tilt.Views
         private async void StopPreviewing()
         {
             await mediaCapture.StopPreviewAsync();
+            faceDetectionEffect.Enabled = false;
             isPreviewing = false;
-            PreviewingButton.Content = "Start camera";
+            PreviewingButton.Content = "Start";
         }
 
         #endregion
@@ -168,6 +211,16 @@ namespace HomeBear.Tilt.Views
         }
 
         /// <summary>
+        /// Raised in case on a user's button snapshot tap.
+        /// </summary>
+        /// <param name="sender">Underlying instance.</param>
+        /// <param name="e">Event args.</param>
+        private void SnapshotButton_Click(object sender, Windows.UI.Xaml.RoutedEventArgs e)
+        {
+            System.Diagnostics.Debug.WriteLine("Flash! Take snapshot");
+        }
+
+        /// <summary>
         /// Raised in case of an failed attempt to start media capturing.
         /// </summary>
         /// <param name="sender">Underlying instance.</param>
@@ -176,6 +229,16 @@ namespace HomeBear.Tilt.Views
         {
             System.Diagnostics.Debug.WriteLine($"Something failed: {errorEventArgs.Message}");
             PreviewingButton.IsEnabled = false;
+        }
+
+        /// <summary>
+        /// Raised in case of an recognized face.
+        /// </summary>
+        /// <param name="sender">Underlying instance.</param>
+        /// <param name="args">Event args.</param>
+        private async void FaceDetectionEffect_FaceDetected(FaceDetectionEffect sender, FaceDetectedEventArgs args)
+        {
+            await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => HighlightDetectedFaces(args.ResultFrame.DetectedFaces));
         }
 
         #endregion

@@ -1,4 +1,8 @@
-﻿<Page
+﻿<!--
+https://github.com/microsoft/Windows-universal-samples/blob/master/Samples/CameraFaceDetection/shared/MainPage.xaml    
+    
+ -->
+<Page
     x:Class="HomeBear.Tilt.Views.MainPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -19,6 +23,7 @@
 
     <!-- Page grid-->
     <Grid>
+        <!-- Grid setup -->
         <Grid.RowDefinitions>
             <!--  Header  -->
             <RowDefinition Height="Auto" />
@@ -190,13 +195,38 @@
                                        FontSize="24"
                                        Margin="0 0 0 10"/>
 
-                            <!-- Preview -->
-                            <CaptureElement Name="PreviewControl"
-                                            Stretch="Fill"
-                                            Margin="0 0 0 10"/>
-                            
+                            <!-- Camera preview container -->
+                            <Grid Margin="0 0 0 10">
+                                
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+
+                                <!-- Canvas for face highlights -->
+                                <Canvas Name="FacesCanvas"
+                                            RenderTransformOrigin="0.5,0.5"
+                                            Width="200"/>
+
+                                <!-- Preview -->
+                                <CaptureElement Name="PreviewControl"
+                                                Width="200"/>
+                            </Grid>
+
                             <!-- Buttons -->
-                            <Button x:Name="PreviewingButton" Content="Stop" Click="PreviewingButton_Click"/>
+                            <StackPanel Orientation="Horizontal">
+                                <!-- Start / Stop button -->
+                                <Button x:Name="PreviewingButton" 
+                                        Content="Stop"
+                                        Click="PreviewingButton_Click"
+                                        Margin="0 0 10 0"
+                                        Width="95"/>
+                                
+                                <!-- Snapshot button -->
+                                <Button Content="Take photo" 
+                                        Width="95"
+                                        Click="SnapshotButton_Click"/>
+                            </StackPanel>
                         </StackPanel>
                     </Grid>
                 </StackPanel>
