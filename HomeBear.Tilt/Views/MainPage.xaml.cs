@@ -6,6 +6,7 @@ using Windows.Devices.Enumeration;
 using Windows.Media.Capture;
 using Windows.Media.Core;
 using Windows.Media.FaceAnalysis;
+using Windows.Storage;
 using Windows.UI.Core;
 using Windows.UI.Xaml.Controls;
 
@@ -13,6 +14,8 @@ namespace HomeBear.Tilt.Views
 {
     /// <summary>
     /// https://github.com/microsoft/Windows-universal-samples/blob/master/Samples/CameraFaceDetection/cs/MainPage.xaml.cs
+    /// https://docs.microsoft.com/en-us/windows/uwp/audio-video-camera/basic-photo-video-and-audio-capture-with-mediacapture
+    /// 
     /// Entry page of the app. 
     /// It provides an navigation point to all other functionality of HomeBear.
     /// </summary>
@@ -34,6 +37,11 @@ namespace HomeBear.Tilt.Views
         /// Underlying face detection.
         /// </summary>
         private FaceDetectionEffect faceDetectionEffect;
+
+        /// <summary>
+        /// Underlying photo storage folder.
+        /// </summary>
+        private StorageFolder storageFolder;
 
         /// <summary>
         /// Determines if previewing is currently active.
@@ -93,18 +101,9 @@ namespace HomeBear.Tilt.Views
             // Setup callbacks.
             mediaCapture.Failed += MediaCapture_Failed;
 
-            // Try to init the actual capturing.
-            try
-            {
-                var settings = new MediaCaptureInitializationSettings { VideoDeviceId = devices[0].Id };
-                await mediaCapture.InitializeAsync(settings);
-            }
-            // Catch upcoming exceptions.
-            catch (UnauthorizedAccessException)
-            {
-                System.Diagnostics.Debug.WriteLine("The app was denied access to the camera.");
-                return;
-            }
+            // Init the actual capturing.
+            var settings = new MediaCaptureInitializationSettings { VideoDeviceId = devices[0].Id };
+            await mediaCapture.InitializeAsync(settings);
 
             // Setup face detection
             var definition = new FaceDetectionEffectDefinition
@@ -126,6 +125,16 @@ namespace HomeBear.Tilt.Views
         }
 
         /// <summary>
+        /// Initializes the storage async.
+        /// </summary>
+        /// <returns>Task.</returns>
+        private async Task InitializeStorageAsync()
+        {
+            // Get lib folder async.
+            storageFolder = (await StorageLibrary.GetLibraryAsync(KnownLibraryId.Pictures)).SaveFolder;
+        }
+
+        /// <summary>
         /// Highlights the detected faces.
         /// </summary>
         /// <param name="faces">Detected faces.</param>
@@ -135,6 +144,7 @@ namespace HomeBear.Tilt.Views
             if (faces.Count == 0) return;
 
             // Remove all other highlights.
+            FacesCanvas.Children.Clear();
 
             // Draw new highlights.
 
@@ -160,6 +170,7 @@ namespace HomeBear.Tilt.Views
         {
             await mediaCapture.StopPreviewAsync();
             faceDetectionEffect.Enabled = false;
+            FacesCanvas.Children.Clear();
             isPreviewing = false;
             PreviewingButton.Content = "Start";
         }
@@ -170,12 +181,15 @@ namespace HomeBear.Tilt.Views
 
         /// <summary>
         /// Raised when page has been loaded.
-        /// Will init async operations.
+        /// Will trigger async init operations.
         /// </summary>
         /// <param name="sender">Underlying control.</param>
         /// <param name="e">Event args.</param>
         private async void MainPage_Loaded(object sender, Windows.UI.Xaml.RoutedEventArgs e)
         {
+            // Get Storage folder
+            await InitializeStorageAsync();
+
             // Init and start previewing.
             await InitializeCameraAsync();
             StartPreviewing();

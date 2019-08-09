@@ -34,11 +34,12 @@ All features have room for improvements.
 
 **Auto. granted permissions and capabilities**
 
-The system will access your webcamera and microphone capabilities.
+The system will access your web camera, microphone and photo lib capabilities.
 
 ```
 <Capabilities>
     <Capability Name="internetClient" />
+    <uap:Capability Name="picturesLibrary"/>
     <DeviceCapability Name="webcam"/>
     <DeviceCapability Name="microphone"/>
   </Capabilities>
