@@ -9,6 +9,7 @@
 - Visual Studio 2019
 - Raspbbery Pi 3 (B) with [Windows 10 IoT Core](https://developer.microsoft.com/en-us/windows/iot) 17763 or higher
 - Pimoroni [Pan-Tilt HAT](https://shop.pimoroni.com/products/pan-tilt-hat)
+- (optional) Webcam ([Supported devices](https://docs.microsoft.com/en-us/windows/iot-core/learn-about-hardware/hardwarecompatlist))
 
 
 ## How it looks
@@ -19,7 +20,8 @@
 
 - [x] Pans
 - [x] Tilts
-- [ ] Camera preview
+- [x] Camera preview
+- [ ] Follows faces
 - [ ] Controls LEDs
 
 ## Usage
@@ -47,17 +49,17 @@ The system will access your web camera, microphone and photo lib capabilities.
 
 ## Information
 
-Most of the logic behind is based on the offical Python libraries.
+Most of the HAT logic is based on the [offical Python libraries](https://github.com/pimoroni/pantilt-hat/blob/master/library/pantilthat/pantilt.py).
 
 ## Known issues
 
 - Reading of pan and tilt angles are (slighlty) off the actual value.
 - The servos sometimes start to buzz quite heavily. 
+- The webcam can flicker on the x, y middle.
 
 ## Ideas for the future
 
 - Connect to Azure IoT Hub
-- Add camera support
 - Add XBox One controller support
 
 
