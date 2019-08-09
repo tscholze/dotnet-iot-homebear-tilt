@@ -82,7 +82,7 @@
                                     Padding="10"
                                     Margin="0 0 40 0"
                                     BorderBrush="White" 
-                                    BorderThickness="1" >
+                                    BorderThickness="1">
 
                             <!-- Box title -->
                             <TextBlock Text="LED values"
@@ -177,6 +177,26 @@
                                 </Button>
                             </Grid>
 
+                        </StackPanel>
+                        
+                        <!-- Camera control -->
+                        <StackPanel Grid.Column="2"  
+                                    Padding="10"
+                                    Margin="0 0 40 0"
+                                    BorderBrush="White" 
+                                    BorderThickness="1">
+                            <!-- Box title -->
+                            <TextBlock Text="Camera"
+                                       FontSize="24"
+                                       Margin="0 0 0 10"/>
+
+                            <!-- Preview -->
+                            <CaptureElement Name="PreviewControl"
+                                            Stretch="Fill"
+                                            Margin="0 0 0 10"/>
+                            
+                            <!-- Buttons -->
+                            <Button x:Name="PreviewingButton" Content="Stop" Click="PreviewingButton_Click"/>
                         </StackPanel>
                     </Grid>
                 </StackPanel>

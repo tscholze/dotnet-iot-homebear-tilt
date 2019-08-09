@@ -10,6 +10,7 @@
 - Raspbbery Pi 3 (B) with [Windows 10 IoT Core](https://developer.microsoft.com/en-us/windows/iot) 17763 or higher
 - Pimoroni [Pan-Tilt HAT](https://shop.pimoroni.com/products/pan-tilt-hat)
 
+
 ## How it looks
 
 ![On-device](docs/on-device-screenshot.jpg)
@@ -18,17 +19,32 @@
 
 - [x] Pans
 - [x] Tilts
+- [ ] Camera preview
 - [ ] Controls LEDs
 
 ## Usage
 
 Still heavily work in progress.
 
-**Keep in mind**
+## Keep in mind
+
+**This a is a learning project**
 
 All features have room for improvements.
 
-**Information**
+**Auto. granted permissions and capabilities**
+
+The system will access your webcamera and microphone capabilities.
+
+```
+<Capabilities>
+    <Capability Name="internetClient" />
+    <DeviceCapability Name="webcam"/>
+    <DeviceCapability Name="microphone"/>
+  </Capabilities>
+  ```
+
+## Information
 
 Most of the logic behind is based on the offical Python libraries.
 
