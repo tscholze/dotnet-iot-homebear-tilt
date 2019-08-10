@@ -203,14 +203,16 @@ https://github.com/microsoft/Windows-universal-samples/blob/master/Samples/Camer
                                     <RowDefinition Height="*" />
                                 </Grid.RowDefinitions>
 
+                                <!-- Preview -->
+                                <CaptureElement Name="PreviewControl"
+                                                Width="200"
+                                                MaxHeight="200"/>
+
                                 <!-- Canvas for face highlights -->
                                 <Canvas Name="FacesCanvas"
                                             RenderTransformOrigin="0.5,0.5"
-                                            Width="200"/>
-
-                                <!-- Preview -->
-                                <CaptureElement Name="PreviewControl"
-                                                Width="200"/>
+                                            Width="200"
+                                            MaxHeight="200"/>
                             </Grid>
 
                             <!-- Buttons -->

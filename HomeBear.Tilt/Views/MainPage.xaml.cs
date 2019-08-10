@@ -3,24 +3,47 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using HomeBear.Tilt.ViewModel;
 using Windows.Devices.Enumeration;
+using Windows.Foundation;
 using Windows.Media.Capture;
 using Windows.Media.Core;
 using Windows.Media.FaceAnalysis;
+using Windows.Media.MediaProperties;
 using Windows.Storage;
+using Windows.UI;
 using Windows.UI.Core;
 using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Media;
+using Windows.UI.Xaml.Shapes;
 
 namespace HomeBear.Tilt.Views
 {
     /// <summary>
-    /// https://github.com/microsoft/Windows-universal-samples/blob/master/Samples/CameraFaceDetection/cs/MainPage.xaml.cs
-    /// https://docs.microsoft.com/en-us/windows/uwp/audio-video-camera/basic-photo-video-and-audio-capture-with-mediacapture
-    /// 
     /// Entry page of the app. 
     /// It provides an navigation point to all other functionality of HomeBear.
+    /// 
+    /// Links:
+    ///     - Microsoft camera face detection sample.
+    ///         https://github.com/microsoft/Windows-universal-samples/blob/master/Samples/CameraFaceDetection/cs/MainPage.xaml.cs
+    ///     
+    ///     - Microsoft Docs capture example.
+    ///         https://docs.microsoft.com/en-us/windows/uwp/audio-video-camera/basic-photo-video-and-audio-capture-with-mediacapture
     /// </summary>
     public sealed partial class MainPage : Page
     {
+        #region Constants
+
+        /// <summary>
+        /// Gets the default face rect stroke color.
+        /// </summary>
+        private readonly SolidColorBrush FACE_RECT_STROKE_COLOR = new SolidColorBrush(Colors.Yellow);
+
+        /// <summary>
+        /// Gets the default face rect stroke thickness.
+        /// </summary>
+        private readonly int FACE_RECT_STROKE_THICKNESS = 3;
+
+        #endregion
+
         #region Properties 
 
         /// <summary>
@@ -32,6 +55,8 @@ namespace HomeBear.Tilt.Views
         /// Underlying media capture instance for webcam.
         /// </summary>
         private MediaCapture mediaCapture;
+
+        private VideoEncodingProperties previewProperties;
 
         /// <summary>
         /// Underlying face detection.
@@ -116,9 +141,12 @@ namespace HomeBear.Tilt.Views
             faceDetectionEffect = (FaceDetectionEffect) await mediaCapture.AddVideoEffectAsync(definition, MediaStreamType.VideoPreview);
             faceDetectionEffect.DesiredDetectionInterval = TimeSpan.FromMilliseconds(33);
             
-            // Setup callbacks
+            // Setup callbacks.
             faceDetectionEffect.FaceDetected += FaceDetectionEffect_FaceDetected;
-            
+
+            // Get properties.
+            previewProperties = mediaCapture.VideoDeviceController.GetMediaStreamProperties(MediaStreamType.VideoPreview) as VideoEncodingProperties; 
+
             // Setup ui.
             PreviewControl.Source = mediaCapture;
             PreviewingButton.IsEnabled = true;
@@ -140,17 +168,80 @@ namespace HomeBear.Tilt.Views
         /// <param name="faces">Detected faces.</param>
         private void HighlightDetectedFaces(IReadOnlyList<DetectedFace> faces)
         {
-            // Ensure at least one face has been detected.
-            if (faces.Count == 0) return;
-
             // Remove all other highlights.
             FacesCanvas.Children.Clear();
 
-            // Draw new highlights.
+            // Ensure at least one face is available.
+            // The foreach will be triggered also if no
+            // valid face with set properties has been found.
+            if(faces.Count == 0 || previewProperties == null)
+            {
+                return;
+            }
 
-            // Update Ui.
-            System.Diagnostics.Debug.WriteLine($"FOUND {faces[0].ToString()}");
+            // Get the rectangle of the preview control.
+            var previewRect = TransformRectDimension(previewProperties, PreviewControl);
+
+            // Get preview stream properties.
+            double previewWidth = previewProperties.Width;
+            double previewHeight = previewProperties.Height;
+
+            // Draw new highlights.
+            foreach (var face in faces)
+            {
+                // Get scaled position information of the face.
+                var faceBox = face.FaceBox;
+                var w = (faceBox.Width / previewWidth) * previewRect.Width;
+                var h = (faceBox.Height / previewHeight) * previewRect.Height;
+                var x = (faceBox.X / previewWidth) * previewRect.Width;
+                var y = (faceBox.Y / previewHeight) * previewRect.Height;
+
+                // Create rectangle from face box's properties.
+                Rectangle faceRect = new Rectangle
+                {
+                    Width = w,
+                    Height = h,
+                    Stroke = FACE_RECT_STROKE_COLOR,
+                    StrokeThickness = FACE_RECT_STROKE_THICKNESS
+                };
+
+                // Align rectangle.
+                Canvas.SetLeft(faceRect, x);
+                Canvas.SetTop(faceRect, y);
+
+                // Add rectangle to the canvas view.
+                FacesCanvas.Children.Add(faceRect);
+            }
         }
+
+        /// <summary>
+        /// Transforms values from given dimensions to actual dimensions.
+        /// </summary>
+        /// <param name="previewResolution">Preview / Stream resolution.</param>
+        /// <param name="previewControl">Underlying preview ui control.</param>
+        /// <returns></returns>
+        private Rect TransformRectDimension(VideoEncodingProperties previewResolution, CaptureElement previewControl)
+        {
+            // Calculate scale by width.
+            // This property is hard set by the xaml file.
+            var scale = previewControl.ActualWidth / previewResolution.Width;
+
+            // Calculate scaled properties.
+            var resultingWidth = previewControl.ActualWidth;
+            var resultingHeight = previewResolution.Height * scale;
+            var resultingY = (previewControl.ActualHeight - resultingHeight) / 2.0;
+
+            // Create rect from calculated properties.
+            var result = new Rect
+            {
+                Height = resultingHeight,
+                Width = resultingWidth,
+                Y = resultingY
+            };
+
+            return result;
+        }
+
 
         /// <summary>
         /// Starts previewing and updates the Ui.
@@ -203,6 +294,7 @@ namespace HomeBear.Tilt.Views
         /// <param name="e">Event args.</param>
         private void MainPage_Unloaded(object sender, Windows.UI.Xaml.RoutedEventArgs e)
         {
+            // Stop previewing if page gets unloaded.
             StopPreviewing();
         }
 
@@ -231,6 +323,7 @@ namespace HomeBear.Tilt.Views
         /// <param name="e">Event args.</param>
         private void SnapshotButton_Click(object sender, Windows.UI.Xaml.RoutedEventArgs e)
         {
+            // TODO: Implement feature.
             System.Diagnostics.Debug.WriteLine("Flash! Take snapshot");
         }
 
