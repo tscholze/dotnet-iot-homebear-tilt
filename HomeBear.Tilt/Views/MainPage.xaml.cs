@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using HomeBear.Tilt.ViewModel;
 using Windows.Devices.Enumeration;
@@ -42,6 +43,13 @@ namespace HomeBear.Tilt.Views
         /// </summary>
         private readonly int FACE_RECT_STROKE_THICKNESS = 3;
 
+        /// <summary>
+        /// Threshold which determines the maximum difference between
+        /// the center of the preview and the center of the face after
+        /// a movement is required.
+        /// </summary>
+        private readonly float ARM_RELOCATION_CENTER_THRESHHOLD = 25;
+
         #endregion
 
         #region Properties 
@@ -56,6 +64,9 @@ namespace HomeBear.Tilt.Views
         /// </summary>
         private MediaCapture mediaCapture;
 
+        /// <summary>
+        /// Underlying preview stream properties of the ui control.
+        /// </summary>
         private VideoEncodingProperties previewProperties;
 
         /// <summary>
@@ -138,14 +149,14 @@ namespace HomeBear.Tilt.Views
             };
 
             // Get effect.
-            faceDetectionEffect = (FaceDetectionEffect) await mediaCapture.AddVideoEffectAsync(definition, MediaStreamType.VideoPreview);
+            faceDetectionEffect = (FaceDetectionEffect)await mediaCapture.AddVideoEffectAsync(definition, MediaStreamType.VideoPreview);
             faceDetectionEffect.DesiredDetectionInterval = TimeSpan.FromMilliseconds(33);
-            
+
             // Setup callbacks.
             faceDetectionEffect.FaceDetected += FaceDetectionEffect_FaceDetected;
 
             // Get properties.
-            previewProperties = mediaCapture.VideoDeviceController.GetMediaStreamProperties(MediaStreamType.VideoPreview) as VideoEncodingProperties; 
+            previewProperties = mediaCapture.VideoDeviceController.GetMediaStreamProperties(MediaStreamType.VideoPreview) as VideoEncodingProperties;
 
             // Setup ui.
             PreviewControl.Source = mediaCapture;
@@ -165,53 +176,58 @@ namespace HomeBear.Tilt.Views
         /// <summary>
         /// Highlights the detected faces.
         /// </summary>
-        /// <param name="faces">Detected faces.</param>
-        private void HighlightDetectedFaces(IReadOnlyList<DetectedFace> faces)
+        /// <param name="rects">Scaled rects of detected faces.</param>
+        private void DrawFaceRects(IEnumerable<Rect> rects)
         {
-            // Remove all other highlights.
-            FacesCanvas.Children.Clear();
-
-            // Ensure at least one face is available.
-            // The foreach will be triggered also if no
-            // valid face with set properties has been found.
-            if(faces.Count == 0 || previewProperties == null)
+            // Iterate over all scalled face rects.
+            foreach (var rect in rects)
             {
-                return;
-            }
-
-            // Get the rectangle of the preview control.
-            var previewRect = TransformRectDimension(previewProperties, PreviewControl);
-
-            // Get preview stream properties.
-            double previewWidth = previewProperties.Width;
-            double previewHeight = previewProperties.Height;
-
-            // Draw new highlights.
-            foreach (var face in faces)
-            {
-                // Get scaled position information of the face.
-                var faceBox = face.FaceBox;
-                var w = (faceBox.Width / previewWidth) * previewRect.Width;
-                var h = (faceBox.Height / previewHeight) * previewRect.Height;
-                var x = (faceBox.X / previewWidth) * previewRect.Width;
-                var y = (faceBox.Y / previewHeight) * previewRect.Height;
-
                 // Create rectangle from face box's properties.
                 Rectangle faceRect = new Rectangle
                 {
-                    Width = w,
-                    Height = h,
+                    Width = rect.Width,
+                    Height = rect.Height,
                     Stroke = FACE_RECT_STROKE_COLOR,
                     StrokeThickness = FACE_RECT_STROKE_THICKNESS
                 };
 
                 // Align rectangle.
-                Canvas.SetLeft(faceRect, x);
-                Canvas.SetTop(faceRect, y);
+                Canvas.SetLeft(faceRect, rect.X);
+                Canvas.SetTop(faceRect, rect.Y);
 
                 // Add rectangle to the canvas view.
                 FacesCanvas.Children.Add(faceRect);
             }
+        }
+
+        /// <summary>
+        /// Gets to the Ui control dimension scaled rects for given faces.
+        /// </summary>
+        /// <param name="faces">List of faces to scale.</param>
+        /// <returns>Scaled list of rects.</returns>
+        private IEnumerable<Rect> ScaledFaceRects(IReadOnlyList<DetectedFace> faces)
+        {
+            // Get the rectangle of the preview control.
+            var previewRect = ScaleStreamToPreviewDimensions(previewProperties, PreviewControl);
+
+            // Get preview stream properties.
+            double previewWidth = previewProperties.Width;
+            double previewHeight = previewProperties.Height;
+
+            // Map FaceBox to a scaled rect.
+            return faces.Select(face =>
+            {
+                // Get scaled position information of the face.
+                var faceBox = face.FaceBox;
+                var resultingWidth = (faceBox.Width / previewWidth) * previewRect.Width;
+                var resultingHeight = (faceBox.Height / previewHeight) * previewRect.Height;
+                var resultingX = (faceBox.X / previewWidth) * previewRect.Width;
+                var resultingY = (faceBox.Y / previewHeight) * previewRect.Height;
+
+                // Init new rect.
+                var rect = new Rect(resultingX, resultingY, resultingWidth, resultingHeight);
+                return rect;
+            });
         }
 
         /// <summary>
@@ -220,7 +236,7 @@ namespace HomeBear.Tilt.Views
         /// <param name="previewResolution">Preview / Stream resolution.</param>
         /// <param name="previewControl">Underlying preview ui control.</param>
         /// <returns></returns>
-        private Rect TransformRectDimension(VideoEncodingProperties previewResolution, CaptureElement previewControl)
+        private Rect ScaleStreamToPreviewDimensions(VideoEncodingProperties previewResolution, CaptureElement previewControl)
         {
             // Calculate scale by width.
             // This property is hard set by the xaml file.
@@ -242,6 +258,43 @@ namespace HomeBear.Tilt.Views
             return result;
         }
 
+        /// <summary>
+        /// Updated if required the position of the arm dependent on
+        /// the given rects.
+        /// 
+        /// Caution:
+        /// Only the first rect found will be used to update the 
+        /// position.
+        /// </summary>
+        /// <param name="rects">List of rects.</param>
+        private void UpdateArmPosition(IEnumerable<Rect> rects)
+        {
+            // Determine if a re-positing of the arm is required.
+            var rect = rects.FirstOrDefault();
+            var rectCenter = rect.X + (rect.Width / 2);
+            var controlCenter = PreviewControl.Width / 2;
+            var isMovementRequired = Math.Abs(rectCenter - controlCenter) > ARM_RELOCATION_CENTER_THRESHHOLD;
+
+            // Ensure that a movement is required.
+            if (isMovementRequired == false)
+            {
+                System.Diagnostics.Debug.WriteLine("OK");
+                return;
+            }
+
+            // If the face is left of the preview center.
+            if (rectCenter < controlCenter)
+            {
+                // move to the right.
+                System.Diagnostics.Debug.WriteLine("Too Left");
+            }
+            // If the face is left of the preview center.
+            else if (rectCenter > controlCenter)
+            {
+                // move to the left.
+                System.Diagnostics.Debug.WriteLine("Too Right");
+            }
+        }
 
         /// <summary>
         /// Starts previewing and updates the Ui.
@@ -340,12 +393,36 @@ namespace HomeBear.Tilt.Views
 
         /// <summary>
         /// Raised in case of an recognized face.
+        /// Will trigger an ui and arm updated if required.
         /// </summary>
         /// <param name="sender">Underlying instance.</param>
         /// <param name="args">Event args.</param>
         private async void FaceDetectionEffect_FaceDetected(FaceDetectionEffect sender, FaceDetectedEventArgs args)
         {
-            await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => HighlightDetectedFaces(args.ResultFrame.DetectedFaces));
+            // Reset existing effects.
+            FacesCanvas.Children.Clear();
+
+            // Get faces from arguments.
+            var faces = args.ResultFrame.DetectedFaces;
+
+            // Ensure at least one face has been detected.
+            if (faces.Count == 0)
+            {
+                return;
+            }
+
+            // Get back to the main thread to access and updated the ui.
+            await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+            {
+                // Transform found faces to scaled face rects.
+                var scaledFaceRects = ScaledFaceRects(faces);
+
+                // Update ui.
+                DrawFaceRects(scaledFaceRects);
+
+                // Update robo arm position.
+                UpdateArmPosition(scaledFaceRects);
+            });
         }
 
         #endregion
