@@ -286,13 +286,13 @@ namespace HomeBear.Tilt.Views
             if (rectCenter < controlCenter)
             {
                 // move to the right.
-                System.Diagnostics.Debug.WriteLine("Too Left");
+                viewModel.PositivePanCommand.Execute(null);
             }
             // If the face is left of the preview center.
             else if (rectCenter > controlCenter)
             {
                 // move to the left.
-                System.Diagnostics.Debug.WriteLine("Too Right");
+                viewModel.NegativePanCommand.Execute(null);
             }
         }
 
@@ -399,21 +399,21 @@ namespace HomeBear.Tilt.Views
         /// <param name="args">Event args.</param>
         private async void FaceDetectionEffect_FaceDetected(FaceDetectionEffect sender, FaceDetectedEventArgs args)
         {
-            // Reset existing effects.
-            FacesCanvas.Children.Clear();
-
-            // Get faces from arguments.
-            var faces = args.ResultFrame.DetectedFaces;
-
-            // Ensure at least one face has been detected.
-            if (faces.Count == 0)
-            {
-                return;
-            }
-
             // Get back to the main thread to access and updated the ui.
             await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
             {
+                // Reset existing effects.
+                FacesCanvas.Children.Clear();
+
+                // Get faces from arguments.
+                var faces = args.ResultFrame.DetectedFaces;
+
+                // Ensure at least one face has been detected.
+                if (faces.Count == 0)
+                {
+                    return;
+                }
+
                 // Transform found faces to scaled face rects.
                 var scaledFaceRects = ScaledFaceRects(faces);
 
