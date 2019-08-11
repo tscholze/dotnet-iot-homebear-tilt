@@ -21,6 +21,7 @@
 - [x] Pans
 - [x] Tilts
 - [x] Camera preview
+- [x] Save camera snaphots
 - [ ] Follows faces
 - [ ] Controls LEDs
 

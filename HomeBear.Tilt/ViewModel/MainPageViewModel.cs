@@ -11,8 +11,52 @@ using Windows.System.Threading;
 
 namespace HomeBear.Tilt.ViewModel
 {
+    /// <summary>
+    /// View model class for the MainPage.
+    /// </summary>
     class MainPageViewModel : BaseViewModel
     {
+        #region Commands
+
+        /// <summary>
+        /// This command will update the selected control mode to manual.
+        /// </summary>
+        public ICommand SelectManualModeCommand { get; private set; }
+
+        /// <summary>
+        /// This command will update the selected control mode to camera
+        /// based face detection.
+        /// </summary>
+        public ICommand SelectFaceDetectionModeCommand { get; private set; }
+
+        /// <summary>
+        /// This command will update the selected control mode to XBox
+        /// controller.
+        /// </summary>
+        public ICommand SelectXBoxControllerModeCommand { get; private set; }
+
+        /// <summary>
+        /// This command will trigger a panning in the positive direction.
+        /// </summary>
+        public ICommand PositivePanCommand { get; private set; }
+
+        /// <summary>
+        /// This command will trigger a panning in the negative direction.
+        /// </summary>
+        public ICommand NegativePanCommand { get; private set; }
+
+        /// <summary>
+        /// This command will trigger a tilting in the negative direction.
+        /// </summary>
+        public ICommand PositiveTiltCommand { get; private set; }
+
+        /// <summary>
+        /// This command will trigger a tilting in the negative direction.
+        /// </summary>
+        public ICommand NegativeTiltCommand { get; private set; }
+
+        #endregion
+
         #region Public properties 
 
         private string currentTime;
@@ -119,58 +163,7 @@ namespace HomeBear.Tilt.ViewModel
 
         #endregion
 
-        #region Commands
-
-        /// <summary>
-        /// This command will update the selected control mode to manual.
-        /// </summary>
-        public ICommand SelectManualModeCommand { get; private set; }
-
-        /// <summary>
-        /// This command will update the selected control mode to camera
-        /// based face detection.
-        /// </summary>
-        public ICommand SelectFaceDetectionModeCommand { get; private set; }
-
-        /// <summary>
-        /// This command will update the selected control mode to XBox
-        /// controller.
-        /// </summary>
-        public ICommand SelectXBoxControllerModeCommand { get; private set; }
-
-        /// <summary>
-        /// This command will trigger a panning in the positive direction.
-        /// </summary>
-        public ICommand PositivePanCommand { get; private set; }
-
-        /// <summary>
-        /// This command will trigger a panning in the negative direction.
-        /// </summary>
-        public ICommand NegativePanCommand { get; private set; }
-
-        /// <summary>
-        /// This command will trigger a tilting in the negative direction.
-        /// </summary>
-        public ICommand PositiveTiltCommand { get; private set; }
-
-        /// <summary>
-        /// This command will trigger a tilting in the negative direction.
-        /// </summary>
-        public ICommand NegativeTiltCommand { get; private set; }
-
-        #endregion
-
         #region Private properties
-
-        /// <summary>
-        /// Positive delta for panning or tilting in degrees.
-        /// </summary>
-        static readonly int POSTIVE_DEGREE_DELTA = 10;
-
-        /// <summary>
-        /// Negative detla for panning or tilting in degrees.
-        /// </summary>
-        static readonly int NEGATIVE_DEGREE_DETLA = -1 * POSTIVE_DEGREE_DELTA;
 
         /// <summary>
         /// Underlying tilt controller.
@@ -181,6 +174,20 @@ namespace HomeBear.Tilt.ViewModel
         /// Underlying photo storage folder.
         /// </summary>
         StorageFolder storageFolder;
+
+        #endregion
+
+        #region Constants
+
+        /// <summary>
+        /// Positive delta for panning or tilting in degrees.
+        /// </summary>
+        static readonly int POSTIVE_DEGREE_DELTA = 10;
+
+        /// <summary>
+        /// Negative detla for panning or tilting in degrees.
+        /// </summary>
+        static readonly int NEGATIVE_DEGREE_DETLA = -1 * POSTIVE_DEGREE_DELTA;
 
         #endregion
 
