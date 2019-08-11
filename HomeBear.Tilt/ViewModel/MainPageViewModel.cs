@@ -1,8 +1,12 @@
 ﻿using GalaSoft.MvvmLight.Command;
 using HomeBear.Tilt.Controller;
+using HomeBear.Tilt.Views;
 using System;
 using System.Windows.Input;
 using Windows.ApplicationModel;
+using Windows.Graphics.Imaging;
+using Windows.Storage;
+using Windows.Storage.Streams;
 using Windows.System.Threading;
 
 namespace HomeBear.Tilt.ViewModel
@@ -28,6 +32,44 @@ namespace HomeBear.Tilt.ViewModel
                 OnPropertyChanged();
             }
         }
+
+        private HomeBearTiltControlMode selectedMode;
+        /// <summary>
+        /// Selected control mode.
+        /// </summary>
+        public HomeBearTiltControlMode SelectedMode
+        {
+            get
+            {
+                return selectedMode;
+            }
+
+            set
+            {
+                selectedMode = value;
+                OnSelectedModeChanged();
+            }
+        }
+
+        private bool isManualControlEnabled;
+        /// <summary>
+        /// Determines if the manual control ui should
+        /// be visible.
+        /// </summary>
+        public bool IsManualControlEnabled
+        {
+            get
+            {
+                return isManualControlEnabled;
+            }
+
+            set
+            {
+                isManualControlEnabled = value;
+                OnPropertyChanged();
+            }
+        }
+
 
         /// <summary>
         /// Gets the personal, formatted greeting.
@@ -75,6 +117,27 @@ namespace HomeBear.Tilt.ViewModel
             }
         }
 
+        #endregion
+
+        #region Commands
+
+        /// <summary>
+        /// This command will update the selected control mode to manual.
+        /// </summary>
+        public ICommand SelectManualModeCommand { get; private set; }
+
+        /// <summary>
+        /// This command will update the selected control mode to camera
+        /// based face detection.
+        /// </summary>
+        public ICommand SelectFaceDetectionModeCommand { get; private set; }
+
+        /// <summary>
+        /// This command will update the selected control mode to XBox
+        /// controller.
+        /// </summary>
+        public ICommand SelectXBoxControllerModeCommand { get; private set; }
+
         /// <summary>
         /// This command will trigger a panning in the positive direction.
         /// </summary>
@@ -114,6 +177,11 @@ namespace HomeBear.Tilt.ViewModel
         /// </summary>
         readonly PanTiltHAT tiltController = new PanTiltHAT();
 
+        /// <summary>
+        /// Underlying photo storage folder.
+        /// </summary>
+        StorageFolder storageFolder;
+
         #endregion
 
         #region Constructor
@@ -134,6 +202,21 @@ namespace HomeBear.Tilt.ViewModel
            );
 
             // Setup the commands.
+            SelectManualModeCommand = new RelayCommand(() =>
+            {
+                SelectedMode = HomeBearTiltControlMode.MANUAL;
+            });
+
+            SelectFaceDetectionModeCommand = new RelayCommand(() =>
+            {
+                SelectedMode = HomeBearTiltControlMode.FACE_DETECTION;
+            });
+
+            SelectXBoxControllerModeCommand = new RelayCommand(() =>
+            {
+                SelectedMode = HomeBearTiltControlMode.XBOX_CONTROLLER;
+            });
+
             PositivePanCommand = new RelayCommand(() =>
             {
                 tiltController.Pan(tiltController.PanDegrees() + POSTIVE_DEGREE_DELTA);
@@ -157,7 +240,105 @@ namespace HomeBear.Tilt.ViewModel
 
         #endregion
 
+        #region Public helper
+
+        /// <summary>
+        /// SAves given stream as jpg picture to the library.
+        /// </summary>
+        /// <param name="stream">In memory stream with picture information.</param>
+        public async void SavePictureAsync(InMemoryRandomAccessStream stream)
+        {
+            // Try to store file to the picture library folder of the Pi.
+            try
+            {
+                // Create file in memory.
+                var file = await storageFolder.CreateFileAsync(CreatePhotoFilename(), CreationCollisionOption.GenerateUniqueName);
+                using (var inputStream = stream)
+                {
+                    var decoder = await BitmapDecoder.CreateAsync(inputStream);
+                    using (var outputStream = await file.OpenAsync(FileAccessMode.ReadWrite))
+                    {
+                        // Write file to disk.
+                        var encoder = await BitmapEncoder.CreateForTranscodingAsync(outputStream, decoder);
+                        await encoder.FlushAsync();
+                    }
+                }
+            }
+            // Catch any exeption in debug log.
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Exception when taking a photo: " + ex.ToString());
+            }
+        }
+
+        #endregion
+
         #region Private helper
+
+        /// <summary>
+        /// Inits view model async.
+        /// </summary>
+        private async void InitAsync()
+        {
+            // Init TiltController async.
+            await tiltController.InitAsync();
+
+            // Get lib folder async.
+            storageFolder = (await StorageLibrary.GetLibraryAsync(KnownLibraryId.Pictures)).SaveFolder;
+        }
+
+        /// <summary>
+        /// Generates a nearly unique filename for a
+        /// jpeg image.
+        /// </summary>
+        /// <returns>Generated filename.</returns>
+        private string CreatePhotoFilename()
+        {
+            var sanitizedAppName = SanitizedToLower(AppName);
+            var sanitizedTime = DateTime.Now.ToString("yyyymmdd-hhmmss");
+
+            return $"{sanitizedAppName}_{sanitizedTime}.jpg";
+        }
+
+        /// <summary>
+        /// Sanitizes given string to use as file path.
+        /// </summary>
+        /// <param name="input">Underlying string.</param>
+        /// <returns>Sanitized string.</returns>
+        private string SanitizedToLower(string input)
+        {
+            return input.Replace(" ", "_")
+                .Replace(".", "-")
+                .Replace(":", "-")
+                .Replace(",", "-")
+                .ToLower();
+        }
+
+        #endregion
+
+        #region Event handler
+
+        /// <summary>
+        /// Handels changes of the selectMode property.
+        /// </summary>
+        private void OnSelectedModeChanged()
+        {
+            // Update ui.
+            switch (selectedMode)
+            {
+                case HomeBearTiltControlMode.MANUAL:
+                    IsManualControlEnabled = true;
+                    break;
+
+                case HomeBearTiltControlMode.FACE_DETECTION:
+                    IsManualControlEnabled = false;
+                    break;
+
+                case HomeBearTiltControlMode.XBOX_CONTROLLER:
+                    IsManualControlEnabled = false;
+                    break;
+            }
+        }
 
         /// <summary>
         /// Will be update the `CurrentTime` member with each tick.
@@ -166,18 +347,6 @@ namespace HomeBear.Tilt.ViewModel
         private void ClockTimer_Tick(ThreadPoolTimer timer)
         {
             CurrentTime = DateTime.Now.ToShortTimeString();
-        }
-
-        /// <summary>
-        /// Only debug foo!
-        /// </summary>
-        /// <summary>
-        /// Only debug foo!
-        /// </summary>
-        private async void InitAsync()
-        {
-            // Init TiltController async.
-            await tiltController.InitAsync();
         }
 
         #endregion

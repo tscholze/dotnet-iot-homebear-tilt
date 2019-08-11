@@ -1,19 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
 using HomeBear.Tilt.ViewModel;
 using Windows.Devices.Enumeration;
 using Windows.Foundation;
+using Windows.Graphics.Imaging;
 using Windows.Media.Capture;
 using Windows.Media.Core;
 using Windows.Media.FaceAnalysis;
 using Windows.Media.MediaProperties;
 using Windows.Storage;
+using Windows.Storage.Streams;
 using Windows.UI;
 using Windows.UI.Core;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
+using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Shapes;
 
 namespace HomeBear.Tilt.Views
@@ -75,11 +79,6 @@ namespace HomeBear.Tilt.Views
         private FaceDetectionEffect faceDetectionEffect;
 
         /// <summary>
-        /// Underlying photo storage folder.
-        /// </summary>
-        private StorageFolder storageFolder;
-
-        /// <summary>
         /// Determines if previewing is currently active.
         /// </summary>
         private bool isPreviewing = false;
@@ -95,7 +94,10 @@ namespace HomeBear.Tilt.Views
         public MainPage()
         {
             InitializeComponent();
+
+            // Init and setup view model.
             DataContext = viewModel = new MainPageViewModel();
+            viewModel.SelectedMode = HomeBearTiltControlMode.MANUAL;
 
             // Pre setup ui
             PreviewingButton.IsEnabled = false;
@@ -161,16 +163,6 @@ namespace HomeBear.Tilt.Views
             // Setup ui.
             PreviewControl.Source = mediaCapture;
             PreviewingButton.IsEnabled = true;
-        }
-
-        /// <summary>
-        /// Initializes the storage async.
-        /// </summary>
-        /// <returns>Task.</returns>
-        private async Task InitializeStorageAsync()
-        {
-            // Get lib folder async.
-            storageFolder = (await StorageLibrary.GetLibraryAsync(KnownLibraryId.Pictures)).SaveFolder;
         }
 
         /// <summary>
@@ -319,6 +311,8 @@ namespace HomeBear.Tilt.Views
             PreviewingButton.Content = "Start";
         }
 
+
+
         #endregion
 
         #region Event handler
@@ -331,9 +325,6 @@ namespace HomeBear.Tilt.Views
         /// <param name="e">Event args.</param>
         private async void MainPage_Loaded(object sender, Windows.UI.Xaml.RoutedEventArgs e)
         {
-            // Get Storage folder
-            await InitializeStorageAsync();
-
             // Init and start previewing.
             await InitializeCameraAsync();
             StartPreviewing();
@@ -374,10 +365,16 @@ namespace HomeBear.Tilt.Views
         /// </summary>
         /// <param name="sender">Underlying instance.</param>
         /// <param name="e">Event args.</param>
-        private void SnapshotButton_Click(object sender, Windows.UI.Xaml.RoutedEventArgs e)
+        private async void SnapshotButton_Click(object sender, Windows.UI.Xaml.RoutedEventArgs e)
         {
-            // TODO: Implement feature.
-            System.Diagnostics.Debug.WriteLine("Flash! Take snapshot");
+            // Create stream.
+            var stream = new InMemoryRandomAccessStream();
+
+            // Fill stream with captured photo information.
+            await mediaCapture.CapturePhotoToStreamAsync(ImageEncodingProperties.CreateJpeg(), stream);
+
+            // Store picture.
+            viewModel.SavePictureAsync(stream);
         }
 
         /// <summary>
