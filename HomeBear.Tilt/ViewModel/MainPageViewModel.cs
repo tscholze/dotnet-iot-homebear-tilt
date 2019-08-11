@@ -114,6 +114,45 @@ namespace HomeBear.Tilt.ViewModel
             }
         }
 
+        private bool isXBoxControllerControlEnabled;
+        /// <summary>
+        /// Determines if the XBox control ui should
+        /// be visible.
+        /// </summary>
+        public bool IsXBoxControllerControlEnabled
+        {
+            get
+            {
+                return isXBoxControllerControlEnabled;
+            }
+
+            set
+            {
+                isXBoxControllerControlEnabled = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private bool isFaceDetectionControlEnabled;
+        /// <summary>
+        /// Determines if the face detection control ui should
+        /// be visible.
+        /// </summary>
+        public bool IsFaceDetectionControlEnabled
+        {
+            get
+            {
+                return isFaceDetectionControlEnabled;
+            }
+
+            set
+            {
+                isFaceDetectionControlEnabled = value;
+                OnPropertyChanged();
+            }
+        }
+        
+
 
         /// <summary>
         /// Gets the personal, formatted greeting.
@@ -287,6 +326,10 @@ namespace HomeBear.Tilt.ViewModel
         /// </summary>
         private async void InitAsync()
         {
+            // Set default values
+            IsXBoxControllerControlEnabled = false;
+            IsFaceDetectionControlEnabled = false;
+
             // Init TiltController async.
             await tiltController.InitAsync();
 

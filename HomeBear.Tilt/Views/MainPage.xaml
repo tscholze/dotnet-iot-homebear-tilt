@@ -104,15 +104,17 @@ https://github.com/microsoft/Windows-universal-samples/blob/master/Samples/Camer
                             <Button Content="Face Detection"
                                     Command="{Binding SelectFaceDetectionModeCommand}"
                                     Margin="0 0 0 20"
-                                    Width="125"/>
+                                    Width="125"
+                                    IsEnabled="{Binding IsFaceDetectionControlEnabled}"/>
 
                             <!-- XBox Controller -->
                             <Button Content="XBox Controller"
                                     Command="{Binding SelectXBoxControllerModeCommand}"
                                     Margin="0 0 0 20"
-                                    Width="125"/>
+                                    Width="125"
+                                    IsEnabled="{Binding IsXBoxControllerControlEnabled}"/>
 
-                            <!-- Lightz Toggle -->
+                            <!-- Light Toggle -->
                             <Button Content="Lights on / off"
                                     Margin="0 0 0 20"
                                     Width="125"
@@ -233,12 +235,14 @@ https://github.com/microsoft/Windows-universal-samples/blob/master/Samples/Camer
                                         Content="Stop"
                                         Click="PreviewingButton_Click"
                                         Margin="0 0 10 0"
-                                        Width="95"/>
+                                        Width="95"
+                                        IsEnabled="{Binding IsFaceDetectionControlEnabled}"/>
                                 
                                 <!-- Snapshot button -->
                                 <Button Content="Take photo" 
                                         Width="95"
-                                        Click="SnapshotButton_Click"/>
+                                        Click="SnapshotButton_Click"
+                                        IsEnabled="{Binding IsFaceDetectionControlEnabled}"/>
                             </StackPanel>
                         </StackPanel>
                     </Grid>

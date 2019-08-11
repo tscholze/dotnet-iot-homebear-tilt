@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Diagnostics;
 using HomeBear.Tilt.ViewModel;
 using Windows.Devices.Enumeration;
 using Windows.Foundation;
@@ -15,6 +16,9 @@ using Windows.UI.Core;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Shapes;
+using Windows.UI.Xaml;
+using Windows.Gaming.Input;
+using Windows.System;
 
 namespace HomeBear.Tilt.Views
 {
@@ -94,6 +98,11 @@ namespace HomeBear.Tilt.Views
             // Init and setup view model.
             DataContext = viewModel = new MainPageViewModel();
             viewModel.SelectedMode = HomeBearTiltControlMode.MANUAL;
+
+            // Setup gamepad
+            Window.Current.CoreWindow.KeyDown += CoreWindow_KeyDown;
+            Gamepad.GamepadAdded += Gamepad_GamepadAdded;
+            Gamepad.GamepadRemoved += Gamepad_GamepadRemoved;
 
             // Pre setup ui
             PreviewingButton.IsEnabled = false;
@@ -290,6 +299,7 @@ namespace HomeBear.Tilt.Views
         private async void StartPreviewing()
         {
             await mediaCapture.StartPreviewAsync();
+            viewModel.IsFaceDetectionControlEnabled = true;
             faceDetectionEffect.Enabled = true;
             isPreviewing = true;
             PreviewingButton.Content = "Stop";
@@ -301,13 +311,12 @@ namespace HomeBear.Tilt.Views
         private async void StopPreviewing()
         {
             await mediaCapture.StopPreviewAsync();
+            viewModel.IsFaceDetectionControlEnabled = false;
             faceDetectionEffect.Enabled = false;
             FacesCanvas.Children.Clear();
             isPreviewing = false;
             PreviewingButton.Content = "Start";
         }
-
-
 
         #endregion
 
@@ -336,6 +345,60 @@ namespace HomeBear.Tilt.Views
         {
             // Stop previewing if page gets unloaded.
             StopPreviewing();
+        }
+
+        /// <summary>
+        /// Raised when a Gamepad has been added.
+        /// </summary>
+        /// <param name="sender">Underlying sender.</param>
+        /// <param name="e">Event args.</param>
+        private void Gamepad_GamepadAdded(object sender, Gamepad e)
+        {
+            viewModel.IsXBoxControllerControlEnabled = true;
+        }
+
+        /// <summary>
+        /// Raised when a Gamepad has been removed.
+        /// </summary>
+        /// <param name="sender">Underlying sender.</param>
+        /// <param name="e">Event args.</param>
+        private void Gamepad_GamepadRemoved(object sender, Gamepad e)
+        {
+            viewModel.IsXBoxControllerControlEnabled = false;
+        }
+
+        /// <summary>
+        /// Raised for each key down of the user.
+        /// Used to get GamePad events.
+        /// </summary>
+        /// <param name="sender">Underlying control.</param>
+        /// <param name="args">Event args.</param>
+        private void CoreWindow_KeyDown(CoreWindow sender, KeyEventArgs args)
+        {
+            // Listen on pressed keys. 
+            // Use only GamePad ones and trigger actions.
+            switch(args.VirtualKey)
+            {
+                // Stick upwards.
+                case VirtualKey.GamepadLeftThumbstickUp:
+                    viewModel.PositiveTiltCommand.Execute(null);
+                    break;
+
+                // Stick downwards.
+                case VirtualKey.GamepadLeftThumbstickDown:
+                    viewModel.NegativeTiltCommand.Execute(null);
+                    break;
+
+                // Stick to the left.
+                case VirtualKey.GamepadLeftThumbstickLeft:
+                    viewModel.PositivePanCommand.Execute(null);
+                    break;
+
+                // Stick to the right.
+                case VirtualKey.GamepadLeftThumbstickRight:
+                    viewModel.PositivePanCommand.Execute(null);
+                    break;
+            }
         }
 
         /// <summary>
