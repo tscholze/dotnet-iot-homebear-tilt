@@ -19,6 +19,7 @@ using Windows.UI.Xaml.Shapes;
 using Windows.UI.Xaml;
 using Windows.Gaming.Input;
 using Windows.System;
+using Windows.System.Threading;
 
 namespace HomeBear.Tilt.Views
 {
@@ -54,6 +55,11 @@ namespace HomeBear.Tilt.Views
         /// </summary>
         private readonly float ARM_RELOCATION_CENTER_THRESHHOLD = 25;
 
+        /// <summary>
+        /// Time out after another keydown will be accepted.
+        /// </summary>
+        private readonly TimeSpan KEYDOWN_COOLDOWN_SECONDS = TimeSpan.FromSeconds(2);
+
         #endregion
 
         #region Properties 
@@ -77,6 +83,17 @@ namespace HomeBear.Tilt.Views
         /// Underlying face detection.
         /// </summary>
         private FaceDetectionEffect faceDetectionEffect;
+
+        /// <summary>
+        /// Keydown time out timer.
+        /// </summary>
+        private ThreadPoolTimer keyDownCooldownTimer;
+
+        /// <summary>
+        /// Determines if the key down event handler has 
+        /// a cool down set.
+        /// </summary>
+        private bool isKeyDownCooldownActive = false;
 
         /// <summary>
         /// Determines if previewing is currently active.
@@ -120,13 +137,13 @@ namespace HomeBear.Tilt.Views
         /// Initializes the camera and previews.
         /// Will throw an exception if no camera access has been granted.
         /// </summary>
-        /// <returns>Task.</returns>
-        private async Task InitializeCameraAsync()
+        /// <returns>True if init was successful.</returns>
+        private async Task<bool> InitializeCameraAsync()
         {
             // Ensure that the media capture hasn't been init, yet.
             if (mediaCapture != null)
             {
-                return;
+                return false;
             }
 
             // Get all camera devices.
@@ -135,7 +152,7 @@ namespace HomeBear.Tilt.Views
             // Ensure there has been exactly one camera found.
             if (devices.Count != 1)
             {
-                throw new InvalidOperationException("There are no or more than one camera attached to the Pi. Please attach only one.");
+                return false;
             }
 
             // Create new media capture instance.
@@ -168,6 +185,8 @@ namespace HomeBear.Tilt.Views
             // Setup ui.
             PreviewControl.Source = mediaCapture;
             PreviewingButton.IsEnabled = true;
+
+            return true;
         }
 
         /// <summary>
@@ -299,7 +318,7 @@ namespace HomeBear.Tilt.Views
         private async void StartPreviewing()
         {
             await mediaCapture.StartPreviewAsync();
-            viewModel.IsFaceDetectionControlEnabled = true;
+            viewModel.IsFaceDetectionControlAvailable = true;
             faceDetectionEffect.Enabled = true;
             isPreviewing = true;
             PreviewingButton.Content = "Stop";
@@ -311,7 +330,7 @@ namespace HomeBear.Tilt.Views
         private async void StopPreviewing()
         {
             await mediaCapture.StopPreviewAsync();
-            viewModel.IsFaceDetectionControlEnabled = false;
+            viewModel.IsFaceDetectionControlAvailable = false;
             faceDetectionEffect.Enabled = false;
             FacesCanvas.Children.Clear();
             isPreviewing = false;
@@ -331,8 +350,12 @@ namespace HomeBear.Tilt.Views
         private async void MainPage_Loaded(object sender, Windows.UI.Xaml.RoutedEventArgs e)
         {
             // Init and start previewing.
-            await InitializeCameraAsync();
-            StartPreviewing();
+            viewModel.IsFaceDetectionControlAvailable = await InitializeCameraAsync();
+
+            if(viewModel.IsFaceDetectionControlAvailable)
+            {
+                StartPreviewing();
+            }
         }
 
         /// <summary>
@@ -345,6 +368,9 @@ namespace HomeBear.Tilt.Views
         {
             // Stop previewing if page gets unloaded.
             StopPreviewing();
+
+            // Stop timers
+            keyDownCooldownTimer.Cancel();
         }
 
         /// <summary>
@@ -354,7 +380,7 @@ namespace HomeBear.Tilt.Views
         /// <param name="e">Event args.</param>
         private void Gamepad_GamepadAdded(object sender, Gamepad e)
         {
-            viewModel.IsXBoxControllerControlEnabled = true;
+            viewModel.IsXBoxControllerControlAvailable = true;
         }
 
         /// <summary>
@@ -364,7 +390,7 @@ namespace HomeBear.Tilt.Views
         /// <param name="e">Event args.</param>
         private void Gamepad_GamepadRemoved(object sender, Gamepad e)
         {
-            viewModel.IsXBoxControllerControlEnabled = false;
+            viewModel.IsXBoxControllerControlAvailable = false;
         }
 
         /// <summary>
@@ -375,6 +401,12 @@ namespace HomeBear.Tilt.Views
         /// <param name="args">Event args.</param>
         private void CoreWindow_KeyDown(CoreWindow sender, KeyEventArgs args)
         {
+            // Ensure that no cool down is active.
+            if(isKeyDownCooldownActive)
+            {
+                return;
+            }
+
             // Listen on pressed keys. 
             // Use only GamePad ones and trigger actions.
             switch(args.VirtualKey)
@@ -399,6 +431,9 @@ namespace HomeBear.Tilt.Views
                     viewModel.PositivePanCommand.Execute(null);
                     break;
             }
+
+            // Start cool down timer.
+            keyDownCooldownTimer = ThreadPoolTimer.CreateTimer(CooldownTimer_Tick, KEYDOWN_COOLDOWN_SECONDS);
         }
 
         /// <summary>
@@ -443,7 +478,7 @@ namespace HomeBear.Tilt.Views
         /// <param name="errorEventArgs">Event args.</param>
         private void MediaCapture_Failed(MediaCapture sender, MediaCaptureFailedEventArgs errorEventArgs)
         {
-            System.Diagnostics.Debug.WriteLine($"Something failed: {errorEventArgs.Message}");
+            Debug.WriteLine($"Something failed: {errorEventArgs.Message}");
             PreviewingButton.IsEnabled = false;
         }
 
@@ -479,6 +514,16 @@ namespace HomeBear.Tilt.Views
                 // Update robo arm position.
                 UpdateArmPosition(scaledFaceRects);
             });
+        }
+
+        /// <summary>
+        /// Raised in case of the cooldown timer ticked / finished.
+        /// It will disable the cool down flag.
+        /// </summary>
+        /// <param name="timer"></param>
+        private void CooldownTimer_Tick(ThreadPoolTimer timer)
+        {
+            isKeyDownCooldownActive = false;
         }
 
         #endregion

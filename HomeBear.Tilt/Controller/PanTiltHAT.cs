@@ -301,7 +301,6 @@ namespace HomeBear.Tilt.Controller
 
             // Convert pulses to degrees.
             var degrees = MsToDegrees(readBuffer[0] | (readBuffer[1] << 8));
-            Debug.WriteLine($"Found `{degrees}` degrees for action `{action.ToString()}` ");
 
             // Return value.
             return degrees.GetValueOrDefault();

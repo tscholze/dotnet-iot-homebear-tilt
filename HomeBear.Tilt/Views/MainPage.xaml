@@ -105,14 +105,14 @@ https://github.com/microsoft/Windows-universal-samples/blob/master/Samples/Camer
                                     Command="{Binding SelectFaceDetectionModeCommand}"
                                     Margin="0 0 0 20"
                                     Width="125"
-                                    IsEnabled="{Binding IsFaceDetectionControlEnabled}"/>
+                                    IsEnabled="{Binding IsFaceDetectionControlAvailable}"/>
 
                             <!-- XBox Controller -->
                             <Button Content="XBox Controller"
                                     Command="{Binding SelectXBoxControllerModeCommand}"
                                     Margin="0 0 0 20"
                                     Width="125"
-                                    IsEnabled="{Binding IsXBoxControllerControlEnabled}"/>
+                                    IsEnabled="{Binding IsXBoxControllerControlAvailable}"/>
 
                             <!-- Light Toggle -->
                             <Button Content="Lights on / off"
@@ -155,7 +155,7 @@ https://github.com/microsoft/Windows-universal-samples/blob/master/Samples/Camer
                                         Grid.Column="1" 
                                         Style="{StaticResource MovementButtonStyle}"
                                         Command="{Binding PositiveTiltCommand}"
-                                        IsEnabled="{Binding IsManualControlEnabled}">
+                                        IsEnabled="{Binding IsManualControlAvailable}">
                                     <TextBlock HorizontalTextAlignment="Center">
                                         Tilt<LineBreak />(-)
                                     </TextBlock>
@@ -166,7 +166,7 @@ https://github.com/microsoft/Windows-universal-samples/blob/master/Samples/Camer
                                         Grid.Column="0" 
                                         Style="{StaticResource MovementButtonStyle}"
                                         Command="{Binding NegativePanCommand}"
-                                        IsEnabled="{Binding IsManualControlEnabled}">
+                                        IsEnabled="{Binding IsManualControlAvailable}">
                                     <TextBlock HorizontalTextAlignment="Center">
                                         Pan<LineBreak />(-)
                                     </TextBlock>
@@ -177,7 +177,7 @@ https://github.com/microsoft/Windows-universal-samples/blob/master/Samples/Camer
                                         Grid.Column="2" 
                                         Style="{StaticResource MovementButtonStyle}"
                                         Command="{Binding PositivePanCommand}"
-                                        IsEnabled="{Binding IsManualControlEnabled}">
+                                        IsEnabled="{Binding IsManualControlAvailable}">
                                     <TextBlock HorizontalTextAlignment="Center">
                                         Pan<LineBreak />(+)
                                     </TextBlock>
@@ -188,7 +188,7 @@ https://github.com/microsoft/Windows-universal-samples/blob/master/Samples/Camer
                                         Grid.Column="1"
                                         Style="{StaticResource MovementButtonStyle}"
                                         Command="{Binding NegativeTiltCommand}"
-                                        IsEnabled="{Binding IsManualControlEnabled}">
+                                        IsEnabled="{Binding IsManualControlAvailable}">
                                     <TextBlock HorizontalTextAlignment="Center">
                                         Tilt <LineBreak />(+) 
                                     </TextBlock>
@@ -236,13 +236,13 @@ https://github.com/microsoft/Windows-universal-samples/blob/master/Samples/Camer
                                         Click="PreviewingButton_Click"
                                         Margin="0 0 10 0"
                                         Width="95"
-                                        IsEnabled="{Binding IsFaceDetectionControlEnabled}"/>
+                                        IsEnabled="{Binding IsFaceDetectionControlAvailable}"/>
                                 
                                 <!-- Snapshot button -->
                                 <Button Content="Take photo" 
                                         Width="95"
                                         Click="SnapshotButton_Click"
-                                        IsEnabled="{Binding IsFaceDetectionControlEnabled}"/>
+                                        IsEnabled="{Binding IsFaceDetectionControlAvailable}"/>
                             </StackPanel>
                         </StackPanel>
                     </Grid>

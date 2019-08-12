@@ -95,59 +95,59 @@ namespace HomeBear.Tilt.ViewModel
             }
         }
 
-        private bool isManualControlEnabled;
+        private bool isManualControlAvailable;
         /// <summary>
         /// Determines if the manual control ui should
         /// be visible.
         /// </summary>
-        public bool IsManualControlEnabled
+        public bool IsManualControlAvailable
         {
             get
             {
-                return isManualControlEnabled;
+                return isManualControlAvailable;
             }
 
             set
             {
-                isManualControlEnabled = value;
+                isManualControlAvailable = value;
                 OnPropertyChanged();
             }
         }
 
-        private bool isXBoxControllerControlEnabled;
+        private bool isXBoxControllerControlAvailable;
         /// <summary>
         /// Determines if the XBox control ui should
         /// be visible.
         /// </summary>
-        public bool IsXBoxControllerControlEnabled
+        public bool IsXBoxControllerControlAvailable
         {
             get
             {
-                return isXBoxControllerControlEnabled;
+                return isXBoxControllerControlAvailable;
             }
 
             set
             {
-                isXBoxControllerControlEnabled = value;
+                isXBoxControllerControlAvailable = value;
                 OnPropertyChanged();
             }
         }
 
-        private bool isFaceDetectionControlEnabled;
+        private bool isFaceDetectionControlAvailable;
         /// <summary>
         /// Determines if the face detection control ui should
         /// be visible.
         /// </summary>
-        public bool IsFaceDetectionControlEnabled
+        public bool IsFaceDetectionControlAvailable
         {
             get
             {
-                return isFaceDetectionControlEnabled;
+                return isFaceDetectionControlAvailable;
             }
 
             set
             {
-                isFaceDetectionControlEnabled = value;
+                isFaceDetectionControlAvailable = value;
                 OnPropertyChanged();
             }
         }
@@ -327,8 +327,8 @@ namespace HomeBear.Tilt.ViewModel
         private async void InitAsync()
         {
             // Set default values
-            IsXBoxControllerControlEnabled = false;
-            IsFaceDetectionControlEnabled = false;
+            IsXBoxControllerControlAvailable = false;
+            IsFaceDetectionControlAvailable = false;
 
             // Init TiltController async.
             await tiltController.InitAsync();
@@ -377,15 +377,15 @@ namespace HomeBear.Tilt.ViewModel
             switch (selectedMode)
             {
                 case HomeBearTiltControlMode.MANUAL:
-                    IsManualControlEnabled = true;
+                    IsManualControlAvailable = true;
                     break;
 
                 case HomeBearTiltControlMode.FACE_DETECTION:
-                    IsManualControlEnabled = false;
+                    IsManualControlAvailable = false;
                     break;
 
                 case HomeBearTiltControlMode.XBOX_CONTROLLER:
-                    IsManualControlEnabled = false;
+                    IsManualControlAvailable = false;
                     break;
             }
         }
