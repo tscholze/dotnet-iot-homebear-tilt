@@ -2,9 +2,17 @@
 using HomeBear.Tilt.Controller;
 using HomeBear.Tilt.Views;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using Windows.ApplicationModel;
+using Windows.Foundation;
 using Windows.Graphics.Imaging;
+using Windows.Media.Capture;
+using Windows.Media.Core;
+using Windows.Media.FaceAnalysis;
+using Windows.Media.MediaProperties;
 using Windows.Storage;
 using Windows.Storage.Streams;
 using Windows.System.Threading;
@@ -59,21 +67,21 @@ namespace HomeBear.Tilt.ViewModel
 
         #region Public properties 
 
-        private string currentTime;
+        private MediaCapture mediaCapture;
         /// <summary>
-        /// Gets the current time.
+        /// Underlying media capture instance for webcam.
         /// </summary>
-        public string CurrentTime
+        public MediaCapture MediaCapture
         {
             get
             {
-                return currentTime;
+                return mediaCapture;
             }
 
             set
             {
-                currentTime = value;
-                OnPropertyChanged();
+                mediaCapture = value;
+                OnMediaCaptureSet();
             }
         }
 
@@ -151,8 +159,24 @@ namespace HomeBear.Tilt.ViewModel
                 OnPropertyChanged();
             }
         }
-        
 
+        private string currentTime;
+        /// <summary>
+        /// Gets the current time.
+        /// </summary>
+        public string CurrentTime
+        {
+            get
+            {
+                return currentTime;
+            }
+
+            set
+            {
+                currentTime = value;
+                OnPropertyChanged();
+            }
+        }
 
         /// <summary>
         /// Gets the personal, formatted greeting.
@@ -202,31 +226,50 @@ namespace HomeBear.Tilt.ViewModel
 
         #endregion
 
+        #region Public events
+
+        /// <summary>
+        /// Event that will be called if faces has been detected.
+        /// </summary>
+        public event EventHandler<FaceRectsDetectedEvent> FaceRectsDetected;
+
+        #endregion
+
         #region Private properties
 
         /// <summary>
         /// Underlying tilt controller.
         /// </summary>
-        readonly PanTiltHAT tiltController = new PanTiltHAT();
+        private readonly PanTiltHAT tiltController = new PanTiltHAT();
 
         /// <summary>
         /// Underlying photo storage folder.
         /// </summary>
-        StorageFolder storageFolder;
+        private StorageFolder storageFolder;
+
+        /// <summary>
+        /// Underlying preview stream properties of the ui control.
+        /// </summary>
+        private VideoEncodingProperties previewProperties;
+
+        /// <summary>
+        /// Underlying face detection.
+        /// </summary>
+        private FaceDetectionEffect faceDetectionEffect;
 
         #endregion
 
-        #region Constants
+        #region Private constants
 
         /// <summary>
         /// Positive delta for panning or tilting in degrees.
         /// </summary>
-        static readonly int POSTIVE_DEGREE_DELTA = 10;
+        private static readonly int POSTIVE_DEGREE_DELTA = 10;
 
         /// <summary>
         /// Negative detla for panning or tilting in degrees.
         /// </summary>
-        static readonly int NEGATIVE_DEGREE_DETLA = -1 * POSTIVE_DEGREE_DELTA;
+        private static readonly int NEGATIVE_DEGREE_DETLA = -1 * POSTIVE_DEGREE_DELTA;
 
         #endregion
 
@@ -288,12 +331,32 @@ namespace HomeBear.Tilt.ViewModel
 
         #region Public helper
 
-        /// <summary>
-        /// SAves given stream as jpg picture to the library.
-        /// </summary>
-        /// <param name="stream">In memory stream with picture information.</param>
-        public async void SavePictureAsync(InMemoryRandomAccessStream stream)
+        public async void StartPreviewing()
         {
+            await mediaCapture.StartPreviewAsync();
+            IsFaceDetectionControlAvailable = true;
+            faceDetectionEffect.Enabled = true;
+        }
+
+        public async void StopPreviewing()
+        {
+            await mediaCapture.StopPreviewAsync();
+            IsFaceDetectionControlAvailable = false;
+            faceDetectionEffect.Enabled = false;
+        }
+
+        /// <summary>
+        /// Saves given stream as jpg picture to the library.
+        /// </summary>
+        /// <returns>True if successful.</returns>
+        public async Task<bool> SavePictureAsync()
+        {
+            // Create stream.
+            var stream = new InMemoryRandomAccessStream();
+
+            // Fill stream with captured photo information.
+            await mediaCapture.CapturePhotoToStreamAsync(ImageEncodingProperties.CreateJpeg(), stream);
+
             // Try to store file to the picture library folder of the Pi.
             try
             {
@@ -309,11 +372,17 @@ namespace HomeBear.Tilt.ViewModel
                         await encoder.FlushAsync();
                     }
                 }
+
+                // Return success.
+                return true;
             }
             // Catch any exeption in debug log.
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine("Exception when taking a photo: " + ex.ToString());
+
+                // Return failure.
+                return false;
             }
         }
 
@@ -335,6 +404,35 @@ namespace HomeBear.Tilt.ViewModel
 
             // Get lib folder async.
             storageFolder = (await StorageLibrary.GetLibraryAsync(KnownLibraryId.Pictures)).SaveFolder;
+        }
+
+        /// <summary>
+        /// Transforms values from given dimensions to actual dimensions.
+        /// </summary>
+        /// <param name="previewResolution">Preview / Stream resolution.</param>
+        /// <param name="width">Width of the target parent rect.</param>
+        /// <param name="height">Height of the target parent rect.</param>
+        /// <returns>Scaled rect. </returns>
+        private Rect ScaleStreamToPreviewDimensions(VideoEncodingProperties previewResolution, float width, float height)
+        {
+            // Calculate scale by width.
+            // This property is hard set by the xaml file.
+            var scale = width / previewResolution.Width;
+
+            // Calculate scaled properties.
+            var resultingWidth = width;
+            var resultingHeight = previewResolution.Height * scale;
+            var resultingY = (height - resultingHeight) / 2.0;
+
+            // Create rect from calculated properties.
+            var result = new Rect
+            {
+                Height = resultingHeight,
+                Width = resultingWidth,
+                Y = resultingY
+            };
+
+            return result;
         }
 
         /// <summary>
@@ -367,6 +465,75 @@ namespace HomeBear.Tilt.ViewModel
         #endregion
 
         #region Event handler
+
+        /// <summary>
+        /// Handles changes of the mediaCapture property.
+        /// </summary>
+        private async void OnMediaCaptureSet()
+        {
+            // Updated preview properties from mediaCapture.
+            previewProperties = mediaCapture
+                .VideoDeviceController
+                .GetMediaStreamProperties(MediaStreamType.VideoPreview)
+                as VideoEncodingProperties;
+
+            // Update effect
+            // Setup face detection
+            var definition = new FaceDetectionEffectDefinition
+            {
+                SynchronousDetectionEnabled = false,
+                DetectionMode = FaceDetectionMode.HighPerformance
+            };
+
+            faceDetectionEffect = (FaceDetectionEffect)await mediaCapture.AddVideoEffectAsync(definition, MediaStreamType.VideoPreview);
+            faceDetectionEffect.DesiredDetectionInterval = TimeSpan.FromMilliseconds(33);
+            faceDetectionEffect.FaceDetected += FaceDetectionEffect_FaceDetected;
+        }
+
+        /// <summary>
+        /// Raised in case of an recognized face.
+        /// Will trigger an ui and arm updated if required.
+        /// </summary>
+        /// <param name="sender">Underlying instance.</param>
+        /// <param name="args">Event args.</param>
+        private void FaceDetectionEffect_FaceDetected(FaceDetectionEffect sender, FaceDetectedEventArgs args)
+        {
+            // Get faces from arguments.
+            var faces = args.ResultFrame.DetectedFaces;
+
+            // Ensure at least one face has been detected.
+            if (faces.Count == 0)
+            {
+                return;
+            }
+
+            float width = 3;
+            float height =4;
+            // Get the rectangle of the preview control.
+            var previewRect = ScaleStreamToPreviewDimensions(previewProperties, width, height);
+
+            // Get preview stream properties.
+            double previewWidth = previewProperties.Width;
+            double previewHeight = previewProperties.Height;
+
+            // Map FaceBox to a scaled rect.
+            var faceRects = faces.Select(face =>
+            {
+                // Get scaled position information of the face.
+                var faceBox = face.FaceBox;
+                var resultingWidth = (faceBox.Width / previewWidth) * previewRect.Width;
+                var resultingHeight = (faceBox.Height / previewHeight) * previewRect.Height;
+                var resultingX = (faceBox.X / previewWidth) * previewRect.Width;
+                var resultingY = (faceBox.Y / previewHeight) * previewRect.Height;
+
+                // Init new rect.
+                var rect = new Rect(resultingX, resultingY, resultingWidth, resultingHeight);
+                return rect;
+            });
+
+            // Call event.
+            FaceRectsDetected(this, new FaceRectsDetectedEvent(faceRects));
+        }
 
         /// <summary>
         /// Handels changes of the selectMode property.

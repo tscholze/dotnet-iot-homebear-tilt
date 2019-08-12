@@ -70,21 +70,6 @@ namespace HomeBear.Tilt.Views
         private readonly MainPageViewModel viewModel;
 
         /// <summary>
-        /// Underlying media capture instance for webcam.
-        /// </summary>
-        private MediaCapture mediaCapture;
-
-        /// <summary>
-        /// Underlying preview stream properties of the ui control.
-        /// </summary>
-        private VideoEncodingProperties previewProperties;
-
-        /// <summary>
-        /// Underlying face detection.
-        /// </summary>
-        private FaceDetectionEffect faceDetectionEffect;
-
-        /// <summary>
         /// Keydown time out timer.
         /// </summary>
         private ThreadPoolTimer keyDownCooldownTimer;
@@ -114,12 +99,13 @@ namespace HomeBear.Tilt.Views
 
             // Init and setup view model.
             DataContext = viewModel = new MainPageViewModel();
-            viewModel.SelectedMode = HomeBearTiltControlMode.MANUAL;
+            viewModel.SelectedMode = HomeBearTiltControlMode.MANUAL;  
 
-            // Setup gamepad
+            // Setup event handler
             Window.Current.CoreWindow.KeyDown += CoreWindow_KeyDown;
             Gamepad.GamepadAdded += Gamepad_GamepadAdded;
             Gamepad.GamepadRemoved += Gamepad_GamepadRemoved;
+            viewModel.FaceRectsDetected += ViewModel_FaceRectsDetected;
 
             // Pre setup ui
             PreviewingButton.IsEnabled = false;
@@ -128,7 +114,6 @@ namespace HomeBear.Tilt.Views
             Loaded += MainPage_Loaded;
             Unloaded += MainPage_Unloaded;
         }
-
         #endregion
 
         #region Private helper
@@ -141,7 +126,7 @@ namespace HomeBear.Tilt.Views
         private async Task<bool> InitializeCameraAsync()
         {
             // Ensure that the media capture hasn't been init, yet.
-            if (mediaCapture != null)
+            if (viewModel.MediaCapture != null)
             {
                 return false;
             }
@@ -156,34 +141,17 @@ namespace HomeBear.Tilt.Views
             }
 
             // Create new media capture instance.
-            mediaCapture = new MediaCapture();
+            viewModel.MediaCapture = new MediaCapture();
 
             // Setup callbacks.
-            mediaCapture.Failed += MediaCapture_Failed;
+            viewModel.MediaCapture.Failed += MediaCapture_Failed;
 
             // Init the actual capturing.
             var settings = new MediaCaptureInitializationSettings { VideoDeviceId = devices[0].Id };
-            await mediaCapture.InitializeAsync(settings);
-
-            // Setup face detection
-            var definition = new FaceDetectionEffectDefinition
-            {
-                SynchronousDetectionEnabled = false,
-                DetectionMode = FaceDetectionMode.HighPerformance
-            };
-
-            // Get effect.
-            faceDetectionEffect = (FaceDetectionEffect)await mediaCapture.AddVideoEffectAsync(definition, MediaStreamType.VideoPreview);
-            faceDetectionEffect.DesiredDetectionInterval = TimeSpan.FromMilliseconds(33);
-
-            // Setup callbacks.
-            faceDetectionEffect.FaceDetected += FaceDetectionEffect_FaceDetected;
-
-            // Get properties.
-            previewProperties = mediaCapture.VideoDeviceController.GetMediaStreamProperties(MediaStreamType.VideoPreview) as VideoEncodingProperties;
+            await viewModel.MediaCapture.InitializeAsync(settings);
 
             // Setup ui.
-            PreviewControl.Source = mediaCapture;
+            PreviewControl.Source = viewModel.MediaCapture;
             PreviewingButton.IsEnabled = true;
 
             return true;
@@ -214,64 +182,6 @@ namespace HomeBear.Tilt.Views
                 // Add rectangle to the canvas view.
                 FacesCanvas.Children.Add(faceRect);
             }
-        }
-
-        /// <summary>
-        /// Gets to the Ui control dimension scaled rects for given faces.
-        /// </summary>
-        /// <param name="faces">List of faces to scale.</param>
-        /// <returns>Scaled list of rects.</returns>
-        private IEnumerable<Rect> ScaledFaceRects(IReadOnlyList<DetectedFace> faces)
-        {
-            // Get the rectangle of the preview control.
-            var previewRect = ScaleStreamToPreviewDimensions(previewProperties, PreviewControl);
-
-            // Get preview stream properties.
-            double previewWidth = previewProperties.Width;
-            double previewHeight = previewProperties.Height;
-
-            // Map FaceBox to a scaled rect.
-            return faces.Select(face =>
-            {
-                // Get scaled position information of the face.
-                var faceBox = face.FaceBox;
-                var resultingWidth = (faceBox.Width / previewWidth) * previewRect.Width;
-                var resultingHeight = (faceBox.Height / previewHeight) * previewRect.Height;
-                var resultingX = (faceBox.X / previewWidth) * previewRect.Width;
-                var resultingY = (faceBox.Y / previewHeight) * previewRect.Height;
-
-                // Init new rect.
-                var rect = new Rect(resultingX, resultingY, resultingWidth, resultingHeight);
-                return rect;
-            });
-        }
-
-        /// <summary>
-        /// Transforms values from given dimensions to actual dimensions.
-        /// </summary>
-        /// <param name="previewResolution">Preview / Stream resolution.</param>
-        /// <param name="previewControl">Underlying preview ui control.</param>
-        /// <returns></returns>
-        private Rect ScaleStreamToPreviewDimensions(VideoEncodingProperties previewResolution, CaptureElement previewControl)
-        {
-            // Calculate scale by width.
-            // This property is hard set by the xaml file.
-            var scale = previewControl.ActualWidth / previewResolution.Width;
-
-            // Calculate scaled properties.
-            var resultingWidth = previewControl.ActualWidth;
-            var resultingHeight = previewResolution.Height * scale;
-            var resultingY = (previewControl.ActualHeight - resultingHeight) / 2.0;
-
-            // Create rect from calculated properties.
-            var result = new Rect
-            {
-                Height = resultingHeight,
-                Width = resultingWidth,
-                Y = resultingY
-            };
-
-            return result;
         }
 
         /// <summary>
@@ -315,11 +225,9 @@ namespace HomeBear.Tilt.Views
         /// <summary>
         /// Starts previewing and updates the Ui.
         /// </summary>
-        private async void StartPreviewing()
+        private void StartPreviewing()
         {
-            await mediaCapture.StartPreviewAsync();
-            viewModel.IsFaceDetectionControlAvailable = true;
-            faceDetectionEffect.Enabled = true;
+            viewModel.StartPreviewing();
             isPreviewing = true;
             PreviewingButton.Content = "Stop";
         }
@@ -327,11 +235,9 @@ namespace HomeBear.Tilt.Views
         /// <summary>
         /// Stops previewing and updates the Ui.
         /// </summary>
-        private async void StopPreviewing()
+        private void StopPreviewing()
         {
-            await mediaCapture.StopPreviewAsync();
-            viewModel.IsFaceDetectionControlAvailable = false;
-            faceDetectionEffect.Enabled = false;
+            viewModel.StopPreviewing();
             FacesCanvas.Children.Clear();
             isPreviewing = false;
             PreviewingButton.Content = "Start";
@@ -461,14 +367,8 @@ namespace HomeBear.Tilt.Views
         /// <param name="e">Event args.</param>
         private async void SnapshotButton_Click(object sender, Windows.UI.Xaml.RoutedEventArgs e)
         {
-            // Create stream.
-            var stream = new InMemoryRandomAccessStream();
-
-            // Fill stream with captured photo information.
-            await mediaCapture.CapturePhotoToStreamAsync(ImageEncodingProperties.CreateJpeg(), stream);
-
-            // Store picture.
-            viewModel.SavePictureAsync(stream);
+            // Call view model to save picture.
+            _ = await viewModel.SavePictureAsync();
         }
 
         /// <summary>
@@ -483,37 +383,20 @@ namespace HomeBear.Tilt.Views
         }
 
         /// <summary>
-        /// Raised in case of an recognized face.
-        /// Will trigger an ui and arm updated if required.
+        /// Raised in case of an faces got detected.
         /// </summary>
         /// <param name="sender">Underlying instance.</param>
-        /// <param name="args">Event args.</param>
-        private async void FaceDetectionEffect_FaceDetected(FaceDetectionEffect sender, FaceDetectedEventArgs args)
+        /// <param name="e">Event args.</param>
+        private void ViewModel_FaceRectsDetected(object sender, FaceRectsDetectedEvent e)
         {
-            // Get back to the main thread to access and updated the ui.
-            await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
-            {
-                // Reset existing effects.
-                FacesCanvas.Children.Clear();
+            // Reset existing effects.
+            FacesCanvas.Children.Clear();
 
-                // Get faces from arguments.
-                var faces = args.ResultFrame.DetectedFaces;
+            // Update ui.
+            DrawFaceRects(e.faceRects);
 
-                // Ensure at least one face has been detected.
-                if (faces.Count == 0)
-                {
-                    return;
-                }
-
-                // Transform found faces to scaled face rects.
-                var scaledFaceRects = ScaledFaceRects(faces);
-
-                // Update ui.
-                DrawFaceRects(scaledFaceRects);
-
-                // Update robo arm position.
-                UpdateArmPosition(scaledFaceRects);
-            });
+            // Update robo arm position.
+            UpdateArmPosition(e.faceRects);
         }
 
         /// <summary>
