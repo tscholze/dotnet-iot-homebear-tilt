@@ -10,6 +10,7 @@
 - Raspbbery Pi 3 (B) with [Windows 10 IoT Core](https://developer.microsoft.com/en-us/windows/iot) 17763 or higher
 - Pimoroni [Pan-Tilt HAT](https://shop.pimoroni.com/products/pan-tilt-hat)
 - (optional) Webcam ([Supported devices](https://docs.microsoft.com/en-us/windows/iot-core/learn-about-hardware/hardwarecompatlist))
+- (optional) Wired XBox 360 controller
 
 
 ## How it looks
@@ -22,7 +23,8 @@
 - [x] Tilts
 - [x] Camera preview
 - [x] Save camera snaphots
-- [ ] Follows faces
+- [x] Follows faces
+- [x] Controller support
 - [ ] Controls LEDs
 
 ## Usage
