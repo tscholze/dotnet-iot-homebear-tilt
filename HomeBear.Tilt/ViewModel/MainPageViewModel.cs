@@ -1,21 +1,27 @@
 ﻿using GalaSoft.MvvmLight.Command;
 using HomeBear.Tilt.Controller;
+using HomeBear.Tilt.Utils;
 using HomeBear.Tilt.Views;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Windows.ApplicationModel;
+using Windows.Devices.Enumeration;
 using Windows.Foundation;
 using Windows.Graphics.Imaging;
 using Windows.Media.Capture;
 using Windows.Media.Core;
-using Windows.Media.FaceAnalysis;
 using Windows.Media.MediaProperties;
 using Windows.Storage;
 using Windows.Storage.Streams;
+using Windows.System;
 using Windows.System.Threading;
+using Windows.UI;
+using Windows.UI.Core;
+using Windows.UI.Xaml.Media;
 
 namespace HomeBear.Tilt.ViewModel
 {
@@ -24,7 +30,57 @@ namespace HomeBear.Tilt.ViewModel
     /// </summary>
     class MainPageViewModel : BaseViewModel
     {
+        #region Public events
+
+        /// <summary>
+        /// Event that will be called if faces has been detected.
+        /// </summary>
+        public event EventHandler<FaceRectsDetectedEventArgs> FaceRectsDetected;
+
+        /// <summary>
+        /// Event that will be called if the camera init was successful.
+        /// </summary>
+        public event EventHandler<MessageEventArgs> CameraInitSucceeded;
+
+        /// <summary>
+        /// Event that will be called if the camera init failed.
+        /// </summary>
+        public event EventHandler<MessageEventArgs> CameraInitFailed;
+
+        /// <summary>
+        /// Event that will be called if saving a camera snapshot was successful.
+        /// </summary>
+        public event EventHandler<MessageEventArgs> SavingSnapshotSucceeded;
+
+        /// <summary>
+        /// Event that will be called if saving a camera snapshot failed.
+        /// </summary>
+        public event EventHandler<MessageEventArgs> SavingSnapshotFailed;
+
+        /// <summary>
+        /// Event that will be called if camera previewing has started.
+        /// </summary>
+        public event EventHandler<MessageEventArgs> PreviewingStarted;
+
+        /// <summary>
+        /// Event that will be called if camera previewing has ended.
+        /// </summary>
+        public event EventHandler<MessageEventArgs> PreviewingEnded;
+
+        #endregion
+
         #region Commands
+
+        /// <summary>
+        /// This command will toggle the state of the previewing.
+        /// (stop -> start, start -> stop).
+        /// </summary>
+        public ICommand TogglePreviewingStateCommand { get; private set; }
+
+        /// <summary>
+        /// This command will trigger taking and saving a snapshot.
+        /// </summary>
+        public ICommand SaveSnapshotCommand { get; private set; }
 
         /// <summary>
         /// This command will update the selected control mode to manual.
@@ -65,6 +121,42 @@ namespace HomeBear.Tilt.ViewModel
 
         #endregion
 
+        #region Private constants
+
+        /// <summary>
+        /// Positive delta for panning or tilting in degrees.
+        /// </summary>
+        private static readonly int POSTIVE_DEGREE_DELTA = 10;
+
+        /// <summary>
+        /// Negative detla for panning or tilting in degrees.
+        /// </summary>
+        private static readonly int NEGATIVE_DEGREE_DETLA = -1 * POSTIVE_DEGREE_DELTA;
+
+        /// <summary>
+        /// Threshold which determines the maximum difference between
+        /// the center of the preview and the center of the face after
+        /// a movement is required.
+        /// </summary>
+        private readonly float ARM_RELOCATION_CENTER_THRESHHOLD = 25;
+
+        /// <summary>
+        /// Time out after another keydown will be accepted.
+        /// </summary>
+        private readonly TimeSpan KEYDOWN_COOLDOWN_SECONDS = TimeSpan.FromSeconds(2);
+
+        /// <summary>
+        /// Background color of a selected mode button.
+        /// </summary>
+        private readonly SolidColorBrush SELECTED_MODE_BUTTON_BACKGROUND = new SolidColorBrush(Colors.DarkGray);
+
+        /// <summary>
+        /// Background color if a non selected mode button.
+        /// </summary>
+        private readonly SolidColorBrush UNSELECTED_MODE_BUTTON_BACKGROUND = new SolidColorBrush(Colors.Black);
+
+        #endregion
+
         #region Public properties 
 
         private MediaCapture mediaCapture;
@@ -78,10 +170,29 @@ namespace HomeBear.Tilt.ViewModel
                 return mediaCapture;
             }
 
-            set
+            private set
             {
                 mediaCapture = value;
-                OnMediaCaptureSet();
+                OnPropertyChanged();
+            }
+        }
+
+
+        /// <summary>
+        /// Determines if previewing is currently active.
+        /// </summary>
+        private bool isPreviewing = false;
+        public bool IsPreviewing
+        {
+            get
+            {
+                return isPreviewing;
+            }
+
+            private set
+            {
+                isPreviewing = value;
+                OnPropertyChanged();
             }
         }
 
@@ -178,6 +289,78 @@ namespace HomeBear.Tilt.ViewModel
             }
         }
 
+        private string takeSnapshotButtonContent;
+        /// <summary>
+        /// Text of the "take snapshot" button.
+        /// </summary>
+        public string TakeSnapshotButtonContent
+        {
+            get
+            {
+                return takeSnapshotButtonContent;
+            }
+
+            private set
+            {
+                takeSnapshotButtonContent = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private SolidColorBrush faceDetectionControlButtonBackground;
+        /// <summary>
+        /// Background color of the face detection selection mode button.
+        /// </summary>
+        public SolidColorBrush FaceDetectionControlButtonBackground
+        {
+            get
+            {
+                return faceDetectionControlButtonBackground;
+            }
+
+            private set
+            {
+                faceDetectionControlButtonBackground = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private SolidColorBrush xBoxControllerControlBackground;
+        /// <summary>
+        /// Background color of the XBox controller selection mode button.
+        /// </summary>
+        public SolidColorBrush XBoxControllerControlButtonBackground
+        {
+            get
+            {
+                return xBoxControllerControlBackground;
+            }
+
+            private set
+            {
+                xBoxControllerControlBackground = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private SolidColorBrush manualControlButtonBackground;
+        /// <summary>
+        /// Background color of the manual selection mode button.
+        /// </summary>
+        public SolidColorBrush ManualControlButtonBackground
+        {
+            get
+            {
+                return manualControlButtonBackground;
+            }
+
+            private set
+            {
+                manualControlButtonBackground = value;
+                OnPropertyChanged();
+            }
+        }
+
         /// <summary>
         /// Gets the personal, formatted greeting.
         /// </summary>
@@ -226,15 +409,6 @@ namespace HomeBear.Tilt.ViewModel
 
         #endregion
 
-        #region Public events
-
-        /// <summary>
-        /// Event that will be called if faces has been detected.
-        /// </summary>
-        public event EventHandler<FaceRectsDetectedEvent> FaceRectsDetected;
-
-        #endregion
-
         #region Private properties
 
         /// <summary>
@@ -250,26 +424,28 @@ namespace HomeBear.Tilt.ViewModel
         /// <summary>
         /// Underlying preview stream properties of the ui control.
         /// </summary>
-        private VideoEncodingProperties previewProperties;
+        private VideoEncodingProperties previewProperties = new VideoEncodingProperties();
 
         /// <summary>
         /// Underlying face detection.
         /// </summary>
         private FaceDetectionEffect faceDetectionEffect;
 
-        #endregion
-
-        #region Private constants
+        /// <summary>
+        /// Keydown time out timer.
+        /// </summary>
+        private ThreadPoolTimer keyDownCooldownTimer;
 
         /// <summary>
-        /// Positive delta for panning or tilting in degrees.
+        /// Determines if the key down event handler has 
+        /// a cool down set.
         /// </summary>
-        private static readonly int POSTIVE_DEGREE_DELTA = 10;
+        private bool isKeyDownCooldownActive = false;
 
         /// <summary>
-        /// Negative detla for panning or tilting in degrees.
+        /// Contains the size of the ui camera preview control.
         /// </summary>
-        private static readonly int NEGATIVE_DEGREE_DETLA = -1 * POSTIVE_DEGREE_DELTA;
+        private Size previewControlSize;
 
         #endregion
 
@@ -290,7 +466,15 @@ namespace HomeBear.Tilt.ViewModel
                 TimeSpan.FromSeconds(1)
            );
 
+            // Setup default values.
+            TakeSnapshotButtonContent = "N/A";
+
             // Setup the commands.
+            TogglePreviewingStateCommand = new RelayCommand(() =>
+            {
+                TooglePreviewingState();
+            });
+
             SelectManualModeCommand = new RelayCommand(() =>
             {
                 SelectedMode = HomeBearTiltControlMode.MANUAL;
@@ -331,31 +515,110 @@ namespace HomeBear.Tilt.ViewModel
 
         #region Public helper
 
-        public async void StartPreviewing()
+        /// <summary>
+        /// Initializes the camera.
+        /// Will raise `CameraInit*` events. 
+        /// </summary>
+        /// <returns>Task.</returns>
+        public async Task InitializeCameraAsync(Size previewControlSize)
         {
-            await mediaCapture.StartPreviewAsync();
+            // Set ui-related values.
+            this.previewControlSize = previewControlSize;
+
+            // Ensure that the media capture hasn't been init, yet.
+            if (MediaCapture != null)
+            {
+                return;
+            }
+
+            // Get all camera devices.
+            var devices = await DeviceInformation.FindAllAsync(DeviceClass.VideoCapture);
+
+            // Ensure there has been exactly one camera found.
+            if (devices.Count != 1)
+            {
+                IsFaceDetectionControlAvailable = false;
+                CameraInitFailed(this, new MessageEventArgs("No or more than one camera found. No face detection available."));
+            }
+
+            // Create new media capture instance.
+            MediaCapture = new MediaCapture();
+
+            // Setup callbacks.
+            MediaCapture.Failed += MediaCapture_Failed;
+
+            // Init the actual capturing.
+            var settings = new MediaCaptureInitializationSettings { VideoDeviceId = devices[0].Id };
+            await MediaCapture.InitializeAsync(settings);
+
+            // Updated preview properties from mediaCapture.
+            previewProperties = MediaCapture
+                .VideoDeviceController
+                .GetMediaStreamProperties(MediaStreamType.VideoPreview)
+                as VideoEncodingProperties;
+
+            // Update effect
+            // Setup face detection
+            var definition = new FaceDetectionEffectDefinition
+            {
+                SynchronousDetectionEnabled = false,
+                DetectionMode = FaceDetectionMode.HighPerformance
+            };
+
+            faceDetectionEffect = (FaceDetectionEffect)await MediaCapture.AddVideoEffectAsync(definition, MediaStreamType.VideoPreview);
+            faceDetectionEffect.DesiredDetectionInterval = TimeSpan.FromMilliseconds(33);
+            faceDetectionEffect.FaceDetected += FaceDetectionEffect_FaceDetected;
+
+            // Operation was successful.
             IsFaceDetectionControlAvailable = true;
-            faceDetectionEffect.Enabled = true;
+            CameraInitSucceeded(this, new MessageEventArgs("Face detection is now available."));
         }
 
+        /// <summary>
+        /// Will start the previewing and updates the ui.
+        /// </summary>
+        public async void StartPreviewing()
+        {
+            await MediaCapture.StartPreviewAsync();
+            isPreviewing = true;
+            IsFaceDetectionControlAvailable = true;
+            faceDetectionEffect.Enabled = true;
+            TakeSnapshotButtonContent = "Stop";
+
+            PreviewingStarted(this, new MessageEventArgs("Previewing has started."));
+        }
+
+        /// <summary>
+        /// Will stops the previewing and updates the ui.
+        /// </summary>
         public async void StopPreviewing()
         {
-            await mediaCapture.StopPreviewAsync();
+            await MediaCapture.StopPreviewAsync();
+            IsPreviewing = false;
             IsFaceDetectionControlAvailable = false;
             faceDetectionEffect.Enabled = false;
+            TakeSnapshotButtonContent = "Start";
+
+            PreviewingEnded(this, new MessageEventArgs("Previewing has ended."));
         }
 
         /// <summary>
         /// Saves given stream as jpg picture to the library.
         /// </summary>
         /// <returns>True if successful.</returns>
-        public async Task<bool> SavePictureAsync()
+        public async Task SavePictureAsync()
         {
+            // Ensure operation is valid
+            if (!IsFaceDetectionControlAvailable)
+            {
+                return;
+            }
+
             // Create stream.
             var stream = new InMemoryRandomAccessStream();
 
             // Fill stream with captured photo information.
-            await mediaCapture.CapturePhotoToStreamAsync(ImageEncodingProperties.CreateJpeg(), stream);
+            await MediaCapture.CapturePhotoToStreamAsync(ImageEncodingProperties.CreateJpeg(), stream);
 
             // Try to store file to the picture library folder of the Pi.
             try
@@ -373,16 +636,12 @@ namespace HomeBear.Tilt.ViewModel
                     }
                 }
 
-                // Return success.
-                return true;
+                SavingSnapshotSucceeded(this, new MessageEventArgs("Snapshot has been successfully saved to the library."));
             }
             // Catch any exeption in debug log.
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine("Exception when taking a photo: " + ex.ToString());
-
-                // Return failure.
-                return false;
+                SavingSnapshotFailed(this, new MessageEventArgs($"Snapshot saving failed: {ex.ToString()}"));
             }
         }
 
@@ -391,19 +650,30 @@ namespace HomeBear.Tilt.ViewModel
         #region Private helper
 
         /// <summary>
-        /// Inits view model async.
+        /// Inits asnyc properties of the view model.
         /// </summary>
         private async void InitAsync()
         {
-            // Set default values
-            IsXBoxControllerControlAvailable = false;
-            IsFaceDetectionControlAvailable = false;
-
             // Init TiltController async.
             await tiltController.InitAsync();
 
             // Get lib folder async.
             storageFolder = (await StorageLibrary.GetLibraryAsync(KnownLibraryId.Pictures)).SaveFolder;
+        }
+
+        /// <summary>
+        /// Toggles the previewing state.
+        /// </summary>
+        private void TooglePreviewingState()
+        {
+            if (IsPreviewing)
+            {
+                StopPreviewing();
+            }
+            else
+            {
+                StartPreviewing();
+            }
         }
 
         /// <summary>
@@ -413,7 +683,7 @@ namespace HomeBear.Tilt.ViewModel
         /// <param name="width">Width of the target parent rect.</param>
         /// <param name="height">Height of the target parent rect.</param>
         /// <returns>Scaled rect. </returns>
-        private Rect ScaleStreamToPreviewDimensions(VideoEncodingProperties previewResolution, float width, float height)
+        private Rect ScaleStreamToPreviewDimensions(VideoEncodingProperties previewResolution, double width, double height)
         {
             // Calculate scale by width.
             // This property is hard set by the xaml file.
@@ -449,6 +719,45 @@ namespace HomeBear.Tilt.ViewModel
         }
 
         /// <summary>
+        /// Updated if required the position of the arm dependent on
+        /// the given rects.
+        /// 
+        /// Caution:
+        ///     - Only the first rect found will be used to update the 
+        ///         position.
+        ///     - It assumes that the width is specified in the ui and
+        ///         the height is dynamic.
+        /// </summary>
+        /// <param name="rects">List of rects.</param>
+        private void UpdateArmPosition(IEnumerable<Rect> rects)
+        {
+            // Determine if a re-positing of the arm is required.
+            var rect = rects.FirstOrDefault();
+            var rectCenter = rect.X + (rect.Width / 2);
+            var isMovementRequired = Math.Abs(rectCenter - previewControlSize.Width) > ARM_RELOCATION_CENTER_THRESHHOLD;
+
+            // Ensure that a movement is required.
+            if (isMovementRequired == false)
+            {
+                Debug.WriteLine("OK");
+                return;
+            }
+
+            // If the face is left of the preview center.
+            if (rectCenter < previewControlSize.Width)
+            {
+                // move to the right.
+                NegativePanCommand.Execute(null);
+            }
+            // If the face is left of the preview center.
+            else if (rectCenter > previewControlSize.Width)
+            {
+                // move to the left.
+                PositivePanCommand.Execute(null);
+            }
+        }
+
+        /// <summary>
         /// Sanitizes given string to use as file path.
         /// </summary>
         /// <param name="input">Underlying string.</param>
@@ -467,27 +776,58 @@ namespace HomeBear.Tilt.ViewModel
         #region Event handler
 
         /// <summary>
-        /// Handles changes of the mediaCapture property.
+        /// Should be called externally to listen on key
+        /// down events.
+        /// 
+        /// Caution:
+        ///     - It only listens on Gamepad keys.
         /// </summary>
-        private async void OnMediaCaptureSet()
+        /// <param name="args"></param>
+        public void OnKeyDown(KeyEventArgs args)
         {
-            // Updated preview properties from mediaCapture.
-            previewProperties = mediaCapture
-                .VideoDeviceController
-                .GetMediaStreamProperties(MediaStreamType.VideoPreview)
-                as VideoEncodingProperties;
-
-            // Update effect
-            // Setup face detection
-            var definition = new FaceDetectionEffectDefinition
+            // Ensure that no cool down is active.
+            if (isKeyDownCooldownActive || !isXBoxControllerControlAvailable)
             {
-                SynchronousDetectionEnabled = false,
-                DetectionMode = FaceDetectionMode.HighPerformance
-            };
+                return;
+            }
 
-            faceDetectionEffect = (FaceDetectionEffect)await mediaCapture.AddVideoEffectAsync(definition, MediaStreamType.VideoPreview);
-            faceDetectionEffect.DesiredDetectionInterval = TimeSpan.FromMilliseconds(33);
-            faceDetectionEffect.FaceDetected += FaceDetectionEffect_FaceDetected;
+            // Listen on pressed keys. 
+            // Use only GamePad ones and trigger actions.
+            switch (args.VirtualKey)
+            {
+                // Stick upwards.
+                case VirtualKey.GamepadLeftThumbstickUp:
+                    PositiveTiltCommand.Execute(null);
+                    break;
+
+                // Stick downwards.
+                case VirtualKey.GamepadLeftThumbstickDown:
+                    NegativeTiltCommand.Execute(null);
+                    break;
+
+                // Stick to the left.
+                case VirtualKey.GamepadLeftThumbstickLeft:
+                    PositivePanCommand.Execute(null);
+                    break;
+
+                // Stick to the right.
+                case VirtualKey.GamepadLeftThumbstickRight:
+                    NegativePanCommand.Execute(null);
+                    break;
+            }
+
+            // Start cool down timer.
+            keyDownCooldownTimer = ThreadPoolTimer.CreateTimer(CooldownTimer_Tick, KEYDOWN_COOLDOWN_SECONDS);
+        }
+
+        /// <summary>
+        /// Raised in case of the init of the camera failed.
+        /// </summary>
+        /// <param name="sender">Underlying instance.</param>
+        /// <param name="errorEventArgs">Event args.</param>
+        private void MediaCapture_Failed(MediaCapture sender, MediaCaptureFailedEventArgs errorEventArgs)
+        {
+            CameraInitFailed(this, new MessageEventArgs($"Camera initializion failed. {errorEventArgs.Message}."));
         }
 
         /// <summary>
@@ -502,15 +842,14 @@ namespace HomeBear.Tilt.ViewModel
             var faces = args.ResultFrame.DetectedFaces;
 
             // Ensure at least one face has been detected.
-            if (faces.Count == 0)
+            if (faces.Count == 0 || !IsFaceDetectionControlAvailable)
             {
+                FaceRectsDetected(this, new FaceRectsDetectedEventArgs(new List<Rect>()));
                 return;
             }
 
-            float width = 3;
-            float height =4;
             // Get the rectangle of the preview control.
-            var previewRect = ScaleStreamToPreviewDimensions(previewProperties, width, height);
+            var previewRect = ScaleStreamToPreviewDimensions(previewProperties, previewControlSize.Width, previewControlSize.Height);
 
             // Get preview stream properties.
             double previewWidth = previewProperties.Width;
@@ -531,8 +870,11 @@ namespace HomeBear.Tilt.ViewModel
                 return rect;
             });
 
+            // Update arm
+            UpdateArmPosition(faceRects);
+
             // Call event.
-            FaceRectsDetected(this, new FaceRectsDetectedEvent(faceRects));
+            FaceRectsDetected(this, new FaceRectsDetectedEventArgs(faceRects));
         }
 
         /// <summary>
@@ -540,19 +882,27 @@ namespace HomeBear.Tilt.ViewModel
         /// </summary>
         private void OnSelectedModeChanged()
         {
+            // Reset colors.
+            ManualControlButtonBackground = UNSELECTED_MODE_BUTTON_BACKGROUND;
+            FaceDetectionControlButtonBackground = UNSELECTED_MODE_BUTTON_BACKGROUND;
+            XBoxControllerControlButtonBackground = UNSELECTED_MODE_BUTTON_BACKGROUND;
+
             // Update ui.
             switch (selectedMode)
             {
                 case HomeBearTiltControlMode.MANUAL:
                     IsManualControlAvailable = true;
+                    ManualControlButtonBackground = SELECTED_MODE_BUTTON_BACKGROUND;
                     break;
 
                 case HomeBearTiltControlMode.FACE_DETECTION:
                     IsManualControlAvailable = false;
+                    FaceDetectionControlButtonBackground = SELECTED_MODE_BUTTON_BACKGROUND;
                     break;
 
                 case HomeBearTiltControlMode.XBOX_CONTROLLER:
                     IsManualControlAvailable = false;
+                    XBoxControllerControlButtonBackground = SELECTED_MODE_BUTTON_BACKGROUND;
                     break;
             }
         }
@@ -564,6 +914,16 @@ namespace HomeBear.Tilt.ViewModel
         private void ClockTimer_Tick(ThreadPoolTimer timer)
         {
             CurrentTime = DateTime.Now.ToShortTimeString();
+        }
+
+        /// <summary>
+        /// Raised in case of the cooldown timer ticked / finished.
+        /// It will disable the cool down flag.
+        /// </summary>
+        /// <param name="timer"></param>
+        private void CooldownTimer_Tick(ThreadPoolTimer timer)
+        {
+            isKeyDownCooldownActive = false;
         }
 
         #endregion

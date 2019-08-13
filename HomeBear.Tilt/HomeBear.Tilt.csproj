@@ -123,9 +123,10 @@
     <Compile Include="Controller\PanTiltHATAction.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utils\DeviceNotFoundException.cs" />
+    <Compile Include="Utils\MessageEventArgs.cs" />
     <Compile Include="ViewModel\BaseViewModel.cs" />
     <Compile Include="ViewModel\MainPageViewModel.cs" />
-    <Compile Include="ViewModel\FaceRectsDetectedEvent.cs" />
+    <Compile Include="Utils\FaceRectsDetectedEventArgs.cs" />
     <Compile Include="Views\HomeBearTiltControlMode.cs" />
     <Compile Include="Views\MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>

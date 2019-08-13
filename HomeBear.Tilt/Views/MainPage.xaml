@@ -97,6 +97,7 @@ https://github.com/microsoft/Windows-universal-samples/blob/master/Samples/Camer
                             <!--  Manual -->
                             <Button Content="Manual"
                                     Command="{Binding SelectManualModeCommand}"
+                                    Background="{Binding ManualControlButtonBackground}"
                                     Margin="0 0 0 20"
                                     Width="125"/>
 
@@ -105,11 +106,13 @@ https://github.com/microsoft/Windows-universal-samples/blob/master/Samples/Camer
                                     Command="{Binding SelectFaceDetectionModeCommand}"
                                     Margin="0 0 0 20"
                                     Width="125"
-                                    IsEnabled="{Binding IsFaceDetectionControlAvailable}"/>
+                                    IsEnabled="{Binding IsFaceDetectionControlAvailable}"
+                                    Background="{Binding FaceDetectionControlButtonBackground}"/>
 
                             <!-- XBox Controller -->
                             <Button Content="XBox Controller"
                                     Command="{Binding SelectXBoxControllerModeCommand}"
+                                    Background="{Binding XBoxControllerControlButtonBackground}"
                                     Margin="0 0 0 20"
                                     Width="125"
                                     IsEnabled="{Binding IsXBoxControllerControlAvailable}"/>
@@ -231,17 +234,16 @@ https://github.com/microsoft/Windows-universal-samples/blob/master/Samples/Camer
                             <!-- Buttons -->
                             <StackPanel Orientation="Horizontal">
                                 <!-- Start / Stop button -->
-                                <Button x:Name="PreviewingButton" 
-                                        Content="Stop"
-                                        Click="PreviewingButton_Click"
+                                <Button Content="{Binding TakeSnapshotButtonContent}"
+                                        Command="{Binding TogglePreviewingStateCommand}"
                                         Margin="0 0 10 0"
                                         Width="95"
                                         IsEnabled="{Binding IsFaceDetectionControlAvailable}"/>
                                 
                                 <!-- Snapshot button -->
                                 <Button Content="Take photo" 
+                                        Command="{Binding SaveSnapshotCommand}"
                                         Width="95"
-                                        Click="SnapshotButton_Click"
                                         IsEnabled="{Binding IsFaceDetectionControlAvailable}"/>
                             </StackPanel>
                         </StackPanel>
