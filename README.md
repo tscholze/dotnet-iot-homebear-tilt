@@ -39,6 +39,10 @@ The casing had to be removed to make it light enough that the camera will be pan
 
 ### Taking camera snapshots
 
+The apps takes on button press snapshots of the current camera preview. The images will be stored in the Pictures library folder of the Windows 10 IoT Core system. 
+
+To access the images from another computer open the Device Portal Website and use the File explorer to download the images.
+
 ![File explorer](docs/filexplorer.PNG)
 
 ### Face detection
