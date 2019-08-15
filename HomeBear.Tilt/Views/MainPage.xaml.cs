@@ -11,6 +11,7 @@ using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Shapes;
 using Windows.UI.Xaml;
 using Windows.Gaming.Input;
+using HomeBear.Tilt.Utils;
 
 namespace HomeBear.Tilt.Views
 {
@@ -220,17 +221,6 @@ namespace HomeBear.Tilt.Views
         }
 
         /// <summary>
-        /// Raised in case on a user's button snapshot tap.
-        /// </summary>
-        /// <param name="sender">Underlying instance.</param>
-        /// <param name="e">Event args.</param>
-        private async void SnapshotButton_Click(object sender, Windows.UI.Xaml.RoutedEventArgs e)
-        {
-            // Call view model to save picture.
-           await viewModel.SavePictureAsync();
-        }
-
-        /// <summary>
         /// Raised in case of an failed attempt to start media capturing.
         /// </summary>
         /// <param name="sender">Underlying instance.</param>
@@ -247,7 +237,7 @@ namespace HomeBear.Tilt.Views
         /// <param name="e">Event args.</param>
         private void ViewModel_PreviewingStarted(object sender, EventArgs e)
         {
-
+            Debug.WriteLine("Previewing started");
         }
 
         /// <summary>
@@ -265,7 +255,7 @@ namespace HomeBear.Tilt.Views
         /// </summary>
         /// <param name="sender">Underlying instance.</param>
         /// <param name="e">Event args.</param>
-        private void ViewModel_FaceRectsDetected(object sender, FaceRectsDetectedEvent e)
+        private void ViewModel_FaceRectsDetected(object sender, FaceRectsDetectedEventArgs e)
         {
             _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
               {

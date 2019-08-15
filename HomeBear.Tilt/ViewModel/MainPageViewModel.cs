@@ -30,7 +30,7 @@ namespace HomeBear.Tilt.ViewModel
     /// </summary>
     class MainPageViewModel : BaseViewModel
     {
-        #region Public events
+        #region Events
 
         /// <summary>
         /// Event that will be called if faces has been detected.
@@ -557,14 +557,12 @@ namespace HomeBear.Tilt.ViewModel
                 .GetMediaStreamProperties(MediaStreamType.VideoPreview)
                 as VideoEncodingProperties;
 
-            // Update effect
             // Setup face detection
             var definition = new FaceDetectionEffectDefinition
             {
                 SynchronousDetectionEnabled = false,
                 DetectionMode = FaceDetectionMode.HighPerformance
             };
-
             faceDetectionEffect = (FaceDetectionEffect)await MediaCapture.AddVideoEffectAsync(definition, MediaStreamType.VideoPreview);
             faceDetectionEffect.DesiredDetectionInterval = TimeSpan.FromMilliseconds(33);
             faceDetectionEffect.FaceDetected += FaceDetectionEffect_FaceDetected;
@@ -785,8 +783,9 @@ namespace HomeBear.Tilt.ViewModel
         /// <param name="args"></param>
         public void OnKeyDown(KeyEventArgs args)
         {
-            // Ensure that no cool down is active.
-            if (isKeyDownCooldownActive || !isXBoxControllerControlAvailable)
+            // Ensure that controller selection mode is
+            // selected and no cool down is active.
+            if (isKeyDownCooldownActive || selectedMode != HomeBearTiltControlMode.XBOX_CONTROLLER)
             {
                 return;
             }

@@ -6,7 +6,6 @@ https://github.com/microsoft/Windows-universal-samples/blob/master/Samples/Camer
     x:Class="HomeBear.Tilt.Views.MainPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:HomeBear.Tilt.Views"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
@@ -14,6 +13,14 @@ https://github.com/microsoft/Windows-universal-samples/blob/master/Samples/Camer
 
     <!-- Page resources -->
     <Page.Resources>
+        <!-- SectionStackPanelStyle-->
+        <Style x:Name="SectionStackPanelStyle" TargetType="StackPanel">
+            <Setter Property="BorderBrush" Value="White" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="10" />
+        </Style>
+        
+        <!-- MovementButtonStyle -->
         <Style x:Key="MovementButtonStyle" TargetType="Button">
             <Setter Property="Width" Value="60" />
             <Setter Property="Height" Value="60" />
@@ -83,11 +90,9 @@ https://github.com/microsoft/Windows-universal-samples/blob/master/Samples/Camer
                         </Grid.ColumnDefinitions>
 
                         <!-- Settings buttons -->
-                        <StackPanel Grid.Column="0"  
-                                    Padding="10"
-                                    Margin="0 0 40 0"
-                                    BorderBrush="White" 
-                                    BorderThickness="1">
+                        <StackPanel Grid.Column="0" 
+                                    Style="{StaticResource SectionStackPanelStyle}"
+                                    Margin="0 0 40 0">
 
                             <!-- Box title -->
                             <TextBlock Text="Modes"
@@ -126,11 +131,8 @@ https://github.com/microsoft/Windows-universal-samples/blob/master/Samples/Camer
 
                         <!-- Movement control -->
                         <StackPanel Grid.Column="1" 
-                                    Orientation="Vertical" 
-                                    Padding="10" 
-                                    Margin="0 0 20 0"
-                                    BorderBrush="White" 
-                                    BorderThickness="1">
+                                    Style="{StaticResource SectionStackPanelStyle}"
+                                    Margin="0 0 40 0">
 
                             <!-- Box title -->
                             <TextBlock Text="Movement values"
@@ -152,7 +154,7 @@ https://github.com/microsoft/Windows-universal-samples/blob/master/Samples/Camer
                                 </Grid.ColumnDefinitions>
 
                                 <!-- Buttons -->
-                                
+
                                 <!-- Tilt - (up) -->
                                 <Button Grid.Row="0" 
                                         Grid.Column="1" 
@@ -193,27 +195,40 @@ https://github.com/microsoft/Windows-universal-samples/blob/master/Samples/Camer
                                         Command="{Binding NegativeTiltCommand}"
                                         IsEnabled="{Binding IsManualControlAvailable}">
                                     <TextBlock HorizontalTextAlignment="Center">
-                                        Tilt <LineBreak />(+) 
+                                        Tilt <LineBreak />(+)
                                     </TextBlock>
                                 </Button>
                             </Grid>
 
                         </StackPanel>
-                        
+
                         <!-- Camera control -->
-                        <StackPanel Grid.Column="2"  
-                                    Padding="10"
-                                    Margin="0 0 40 0"
-                                    BorderBrush="White" 
-                                    BorderThickness="1">
+                        <Grid Grid.Column="2"  
+                              Padding="10"
+                              BorderBrush="White" 
+                              BorderThickness="1">
+
+                            <Grid.RowDefinitions>
+                                <!-- Title -->
+                                <RowDefinition Height="Auto" />
+                                <!-- Camera -->
+                                <RowDefinition Height="Auto" />
+                                <!-- Spacer -->
+                                <RowDefinition Height="*" />
+                                <!-- Buttons -->
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
                             <!-- Box title -->
-                            <TextBlock Text="Camera"
+                            <TextBlock Grid.Row="0"
+                                       Text="Camera"
                                        FontSize="24"
                                        Margin="0 0 0 10"/>
 
                             <!-- Camera preview container -->
-                            <Grid Margin="0 0 0 10">
-                                
+                            <Grid Grid.Row="1" 
+                                  Margin="0 0 0 10">
+
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="*" />
@@ -232,21 +247,22 @@ https://github.com/microsoft/Windows-universal-samples/blob/master/Samples/Camer
                             </Grid>
 
                             <!-- Buttons -->
-                            <StackPanel Orientation="Horizontal">
+                            <StackPanel Grid.Row="3"
+                                        Orientation="Horizontal">
                                 <!-- Start / Stop button -->
                                 <Button Content="{Binding TakeSnapshotButtonContent}"
                                         Command="{Binding TogglePreviewingStateCommand}"
                                         Margin="0 0 10 0"
                                         Width="95"
                                         IsEnabled="{Binding IsFaceDetectionControlAvailable}"/>
-                                
+
                                 <!-- Snapshot button -->
                                 <Button Content="Take photo" 
                                         Command="{Binding SaveSnapshotCommand}"
                                         Width="95"
                                         IsEnabled="{Binding IsFaceDetectionControlAvailable}"/>
                             </StackPanel>
-                        </StackPanel>
+                        </Grid>
                     </Grid>
                 </StackPanel>
             </StackPanel>
