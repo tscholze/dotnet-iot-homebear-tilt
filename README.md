@@ -19,23 +19,57 @@
 
 ## Features
 
+### Overview
+
 - [x] Pans
 - [x] Tilts
 - [x] Camera preview
-- [x] Save camera snaphots
-- [x] Follows faces
-- [x] Controller support
+- [x] Take camera snaphots
+- [x] Follows detected faces
+- [x] Gamepad support
 - [ ] Controls LEDs
+
+### Camera
+
+Windows 10 IoT Core does not support the camera interface of a Raspberry Pi (CSI). I choose a Logitech CS270 HD Webcam ([Amazon](https://www.amazon.de/gp/product/B01BGBJ8Y0)).
+
+The casing had to be removed to make it light enough that the camera will be pan- and tiltable by the servos.
+
+![Camera](docs/camera.jpg)
+
+### Taking camera snapshots
+
+![File explorer](docs/filexplorer.PNG)
+
+### Face detection
+
+To deteced faces, the app will use the [built-in face detection feature](https://docs.microsoft.com/en-us/windows/uwp/audio-video-camera/scene-analysis-for-media-capture)  of the `Windows.Media.Core` package.
+
+The media capture processing capabilities of a Raspberry Pi 3B seems to be not very performant. The detection is slow but works in good light condition.
+
+### Gamepad support
+
+According to Stackoverflow, Windows 10 IoT Core does not work well with the Bluetooth based XBox One gamepad.
+
+The XBox 360 gamepad should work wired or using the Wireless reciever. The receiver lost the connection to the Pi after the app has been started. A USB-wired gamepad works as expected.
+
+### LED controller
+
+To assemble the LED strip I have to learn solidering first. I'll update the app after I earned this skill.
 
 ## Usage
 
-Still heavily work in progress.
+Connect all USB devices like the camera or the gamepad to the Pi. Check if all devices are listed at the dashboard "connected.
+
+Start the app from the App Manager or via a Visual Studio debug session.
+
+![Dashboard](docs/dashboard-devices.jpg)
 
 ## Keep in mind
 
 **This a is a learning project**
 
-All features have room for improvements.
+This is a proof-of-concept app that's purley build for having fun! All features have room for improvements or could harm the hardware.
 
 **Auto. granted permissions and capabilities**
 
@@ -58,13 +92,13 @@ Most of the HAT logic is based on the [offical Python libraries](https://github.
 
 - Reading of pan and tilt angles are (slighlty) off the actual value.
 - The servos sometimes start to buzz quite heavily. 
-- The webcam can flicker on the x, y middle.
+- The webcam could flicker on the x, y middle.
+- The gamepad could be interpreted as touch that selects buttons
 
 ## Ideas for the future
 
 - Connect to Azure IoT Hub
-- Add XBox One controller support
-
+- Add Azure Blog Storage for uploading detected faces
 
 ## Contributing
 
