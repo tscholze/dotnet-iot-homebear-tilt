@@ -28,18 +28,3 @@ steps:
     solution: '$(solution)'
     configuration: '$(buildConfiguration)'
     msbuildArgs: '/p:AppxPackageSigningEnabled=false /p:AppxBundlePlatforms="$(buildPlatform)" /p:AppxPackageDir="$(appxPackageDir)" /p:AppxBundle=Always /p:UapAppxPackageBuildMode=StoreUpload'
-
-- task: SonarCloudPrepare@1
-  inputs:
-    SonarCloud: 'UWP HomeBear.Tilt'
-    organization: 'tscholze-github'
-    scannerMode: 'MSBuild'
-    projectKey: 'io.github.tscholze.homebear'
-    projectName: 'io.github.tscholze.homebear'
-- task: SonarCloudAnalyze@1
-  displayName: 'Run Code Analysis'
-  continueOnError: false
-
-- task: SonarCloudPublish@1
-  inputs:
-    pollingTimeoutSec: '300'
