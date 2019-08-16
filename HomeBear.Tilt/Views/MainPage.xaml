@@ -1,6 +1,11 @@
 ﻿<!--
-https://github.com/microsoft/Windows-universal-samples/blob/master/Samples/CameraFaceDetection/shared/MainPage.xaml    
-    
+    MainPage and entry point of the app. 
+    This page is responsible and specially designed to work best on the 
+    the offical Raspberry Pi touch screen.
+
+    Links:
+        - Microsoft face detection sample
+            https://github.com/microsoft/Windows-universal-samples/blob/master/Samples/CameraFaceDetection/shared/MainPage.xaml    
  -->
 <Page
     x:Class="HomeBear.Tilt.Views.MainPage"
@@ -18,6 +23,12 @@ https://github.com/microsoft/Windows-universal-samples/blob/master/Samples/Camer
             <Setter Property="BorderBrush" Value="White" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Padding" Value="10" />
+        </Style>
+
+        <!-- ModeSelectionButtonStyle -->
+        <Style x:Key="ModeSelectionButtonStyle" TargetType="Button">
+            <Setter Property="Margin" Value="0 0 0 20" />
+            <Setter Property="Width" Value="125" />
         </Style>
         
         <!-- MovementButtonStyle -->
@@ -101,31 +112,27 @@ https://github.com/microsoft/Windows-universal-samples/blob/master/Samples/Camer
 
                             <!--  Manual -->
                             <Button Content="Manual"
+                                    Style="{StaticResource ModeSelectionButtonStyle}"
                                     Command="{Binding SelectManualModeCommand}"
-                                    Background="{Binding ManualControlButtonBackground}"
-                                    Margin="0 0 0 20"
-                                    Width="125"/>
+                                    Background="{Binding ManualControlButtonBackground}"/>
 
                             <!-- Face Detection -->
                             <Button Content="Face Detection"
+                                    Style="{StaticResource ModeSelectionButtonStyle}"
                                     Command="{Binding SelectFaceDetectionModeCommand}"
-                                    Margin="0 0 0 20"
-                                    Width="125"
                                     IsEnabled="{Binding IsFaceDetectionControlAvailable}"
                                     Background="{Binding FaceDetectionControlButtonBackground}"/>
 
                             <!-- XBox Controller -->
                             <Button Content="XBox Controller"
+                                    Style="{StaticResource ModeSelectionButtonStyle}"
                                     Command="{Binding SelectXBoxControllerModeCommand}"
                                     Background="{Binding XBoxControllerControlButtonBackground}"
-                                    Margin="0 0 0 20"
-                                    Width="125"
                                     IsEnabled="{Binding IsXBoxControllerControlAvailable}"/>
 
                             <!-- Light Toggle -->
                             <Button Content="Lights on / off"
-                                    Margin="0 0 0 20"
-                                    Width="125"
+                                    Style="{StaticResource ModeSelectionButtonStyle}"
                                     IsEnabled="False"/>
                         </StackPanel>
 
