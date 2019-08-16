@@ -9,8 +9,7 @@
 |Service|Result|
 |-|-|
 |Continious integration|[![Build Status](https://tscholze.visualstudio.com/HomeBear.Tilt/_apis/build/status/tscholze.dotnet-iot-homebear-tilt?branchName=master)](https://tscholze.visualstudio.com/HomeBear.Tilt/_build/latest?definitionId=6&branchName=master)|
-|Static code analyse|[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=io.github.tscholze.homebear&metric=alert_status)](https://sonarcloud.io/dashboard?id=io.github.tscholze.homebear)
-|
+|Static code analyse|[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=io.github.tscholze.homebear&metric=alert_status)](https://sonarcloud.io/dashboard?id=io.github.tscholze.homebear)|
 
 ## Prerequirements
 - Windows 10
