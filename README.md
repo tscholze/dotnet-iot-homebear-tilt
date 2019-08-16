@@ -72,9 +72,9 @@ To assemble the LED strip I have to learn solidering first. I'll update the app 
 
 Connect all USB devices like the camera or the gamepad to the Pi. Check if all devices are listed at the dashboard "connected.
 
-Start the app from the App Manager or via a Visual Studio debug session.
-
 ![Dashboard](docs/dashboard-devices.jpg)
+
+Start the app from the Device Portal's App Manager or via a Visual Studio debug deployed session.
 
 ## Keep in mind
 
