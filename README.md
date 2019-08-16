@@ -2,7 +2,7 @@
 
 <img src="docs/header.png" width="300" /> 
 
-> Windows 10 IoT Core UWP app that works great with the Pimoroni [Pan-Tilt HAT](https://shop.pimoroni.com/products/pan-tilt-hat) (PIC16F1503).
+> Windows 10 IoT Core UWP app proof-of-concept that works great with the Pimoroni [Pan-Tilt HAT](https://shop.pimoroni.com/products/pan-tilt-hat) (PIC16F1503).
 
 ## Prerequirements
 - Windows 10
@@ -33,7 +33,7 @@
 
 Windows 10 IoT Core does not support the camera interface of a Raspberry Pi (CSI). I choose a Logitech CS270 HD Webcam ([Amazon](https://www.amazon.de/gp/product/B01BGBJ8Y0)).
 
-The casing had to be removed to make it light enough that the camera will be pan- and tiltable by the servos.
+The casing had to be removed to make it light enough that the camera will be pan- and tilt-able by the servos.
 
 ![Camera](docs/camera.jpg)
 
@@ -47,15 +47,15 @@ To access the images from another computer open the Device Portal Website and us
 
 ### Face detection
 
-To deteced faces, the app will use the [built-in face detection feature](https://docs.microsoft.com/en-us/windows/uwp/audio-video-camera/scene-analysis-for-media-capture)  of the `Windows.Media.Core` package.
+To detected faces, the app will use the [built-in face detection feature](https://docs.microsoft.com/en-us/windows/uwp/audio-video-camera/scene-analysis-for-media-capture)  of the `Windows.Media.Core` package.
 
 The media capture processing capabilities of a Raspberry Pi 3B seems to be not very performant. The detection is slow but works in good light condition.
 
 ### Gamepad support
 
-According to Stackoverflow, Windows 10 IoT Core does not work well with the Bluetooth based XBox One gamepad.
+[According to the Microsoft Technet](https://social.msdn.microsoft.com/Forums/en-US/73389c53-3cfd-43f2-8859-db5e5e8c5eb4/xbox-one-controller-for-windows-10-iot), Windows 10 IoT Core does not work well with the Bluetooth based XBox One gamepad.
 
-The XBox 360 gamepad should work wired or using the Wireless reciever. The receiver lost the connection to the Pi after the app has been started. A USB-wired gamepad works as expected.
+The XBox 360 gamepad should work wired or using the Wireless receiver. The receiver lost the connection to the Pi after the app has been started. A USB-wired gamepad works as expected.
 
 ### LED controller
 
@@ -73,7 +73,7 @@ Start the app from the App Manager or via a Visual Studio debug session.
 
 **This a is a learning project**
 
-This is a proof-of-concept app that's purley build for having fun! All features have room for improvements or could harm the hardware.
+This is a proof-of-concept app that's purely build for having fun! All features have room for improvements or could harm the hardware.
 
 **Auto. granted permissions and capabilities**
 
@@ -94,7 +94,7 @@ Most of the HAT logic is based on the [offical Python libraries](https://github.
 
 ## Known issues
 
-- Reading of pan and tilt angles are (slighlty) off the actual value.
+- Reading of pan and tilt angles are (slightly) off the actual value.
 - The servos sometimes start to buzz quite heavily. 
 - The webcam could flicker on the x, y middle.
 - The gamepad could be interpreted as touch that selects buttons
