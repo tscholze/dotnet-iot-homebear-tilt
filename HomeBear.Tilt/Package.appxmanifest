@@ -7,7 +7,7 @@
   IgnorableNamespaces="uap mp">
 
   <Identity
-    Name="29ec1998-b11c-4156-8795-541900470cd3"
+    Name="io.github.tscholze.homebear"
     Publisher="CN=tobia"
     Version="1.0.0.0" />
 
@@ -15,7 +15,7 @@
 
   <Properties>
     <DisplayName>HomeBear.Tilt</DisplayName>
-    <PublisherDisplayName>tobia</PublisherDisplayName>
+    <PublisherDisplayName>Tobias Scholze</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
 
