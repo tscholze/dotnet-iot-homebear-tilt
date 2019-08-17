@@ -4,13 +4,12 @@
 
 > Windows 10 IoT Core UWP app proof-of-concept that works great with the Pimoroni [Pan-Tilt HAT](https://shop.pimoroni.com/products/pan-tilt-hat) (PIC16F1503).
 
-## Build
+## Build status
 
 |Service|Result|
 |-|-|
 |Continious integration|[![Build Status](https://tscholze.visualstudio.com/HomeBear.Tilt/_apis/build/status/tscholze.dotnet-iot-homebear-tilt?branchName=master)](https://tscholze.visualstudio.com/HomeBear.Tilt/_build/latest?definitionId=6&branchName=master)|
-|Static code analyse|[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=io.github.tscholze.homebear&metric=alert_status)](https://sonarcloud.io/dashboard?id=io.github.tscholze.homebear)
-|
+|Static code analyse|[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=io.github.tscholze.homebear&metric=alert_status)](https://sonarcloud.io/dashboard?id=io.github.tscholze.homebear)|
 
 ## Prerequirements
 - Windows 10
@@ -73,9 +72,9 @@ To assemble the LED strip I have to learn solidering first. I'll update the app 
 
 Connect all USB devices like the camera or the gamepad to the Pi. Check if all devices are listed at the dashboard "connected.
 
-Start the app from the App Manager or via a Visual Studio debug session.
-
 ![Dashboard](docs/dashboard-devices.jpg)
+
+Start the app from the Device Portal's App Manager or via a Visual Studio debug deployed session.
 
 ## Keep in mind
 
