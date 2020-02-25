@@ -2,7 +2,7 @@
 
 <img src="docs/header.png" width="300" /> 
 
-> Windows 10 IoT Core UWP app proof-of-concept that works great with the Pimoroni [Pan-Tilt HAT](https://shop.pimoroni.com/products/pan-tilt-hat) (PIC16F1503).
+> Windows 10 IoT Core UWP app proof-of-concept that works great with the Pimoroni [Pan-Tilt HAT](https://shop.pimoroni.com/products/pan-tilt-hat) (PIC16F1503). The app is in a final state. No maintenance effort planned.
 
 ## Build status
 
